@@ -32,10 +32,9 @@ def display_comparison():
                 "Student Order"
             ]
 
-            # Rename only the first 7 columns to match expected structure
             comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
-            # Ensure Student Order is numeric and starts at 1
+            # Ensure Student Order is numeric and sorted
             comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
             comparison_sheet.sort_values(by='Student Order', inplace=True)
 
@@ -49,70 +48,48 @@ def display_comparison():
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
-            # Assign ranks for State and Program
-            def assign_state_program_ranks(df):
-                df = df.sort_values(by='Student Order')
-                df['Rank'] = (df['MAIN CODE'] != df['MAIN CODE'].shift()).cumsum()
-                return df
+            # Function to assign contiguous ranks
+            def assign_ranks(group):
+                group = group.sort_values('Student Order')
+                group['Rank'] = (group['Student Order'].diff() > 1).cumsum() + 1
+                return group
 
-            merged_data = merged_data.groupby('State', group_keys=False).apply(assign_state_program_ranks)
-            merged_data = merged_data.groupby('Program_uploaded', group_keys=False).apply(assign_state_program_ranks)
+            # Tabs for display
+            tab1, tab2, tab3, tab4 = st.tabs(["Merged Data", "State Opted", "Program Opted", "Type Opted"])
 
-            # Tabs for validation and dashboard
-            tab1, tab2, tab3, tab4, tab5 = st.tabs([
-                "Merged Data",
-                "Validation",
-                "State Opted",
-                "Program Opted",
-                "Type Opted"
-            ])
-
-            # Tab 1: Display merged data
+            # Tab 1: Merged Data
             with tab1:
-                st.write("### Merged Table Based on MAIN CODE")
+                st.write("### Merged Data")
                 st.dataframe(merged_data)
 
-            # Tab 2: Validation (Dropdowns)
+            # Tab 2: State Opted
             with tab2:
-                st.write("### Validation")
-
-            # Tab 3: State Opted
-            with tab3:
                 st.write("### State Opted")
-                state_opted = merged_data.groupby('State').apply(
-                    lambda x: pd.Series({
-                        'Options_Filled': x['MAIN CODE'].nunique(),
-                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Ranks': ', '.join(map(str, x['Rank'].unique()))
-                    })
+                state_grouped = merged_data.groupby('State', group_keys=False).apply(assign_ranks)
+                state_summary = state_grouped.groupby(['State', 'Rank']).agg(
+                    Options_Filled=('MAIN CODE', 'count'),
+                    Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().tolist())))
                 ).reset_index()
-                state_opted['Student_Orders'] = state_opted['Student_Orders'].apply(lambda x: ', '.join(x))
-                st.dataframe(state_opted)
+                st.dataframe(state_summary)
 
-            # Tab 4: Program Opted
-            with tab4:
+            # Tab 3: Program Opted
+            with tab3:
                 st.write("### Program Opted")
-                program_opted = merged_data.groupby('Program_uploaded').apply(
-                    lambda x: pd.Series({
-                        'Options_Filled': x['MAIN CODE'].nunique(),
-                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Ranks': ', '.join(map(str, x['Rank'].unique()))
-                    })
+                program_grouped = merged_data.groupby('Program_uploaded', group_keys=False).apply(assign_ranks)
+                program_summary = program_grouped.groupby(['Program_uploaded', 'Rank']).agg(
+                    Options_Filled=('MAIN CODE', 'count'),
+                    Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().tolist())))
                 ).reset_index()
-                program_opted['Student_Orders'] = program_opted['Student_Orders'].apply(lambda x: ', '.join(x))
-                st.dataframe(program_opted)
+                st.dataframe(program_summary)
 
-            # Tab 5: Type Opted
-            with tab5:
+            # Tab 4: Type Opted
+            with tab4:
                 st.write("### Type Opted")
-                type_opted = merged_data.groupby('TYPE_uploaded').apply(
-                    lambda x: pd.Series({
-                        'Options_Filled': x['MAIN CODE'].nunique(),
-                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
-                    })
+                type_summary = merged_data.groupby('TYPE_uploaded').agg(
+                    Options_Filled=('MAIN CODE', 'count'),
+                    Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().tolist())))
                 ).reset_index()
-                type_opted['Student_Orders'] = type_opted['Student_Orders'].apply(lambda x: ', '.join(x))
-                st.dataframe(type_opted)
+                st.dataframe(type_summary)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
@@ -122,7 +99,7 @@ def display_comparison():
 def format_ranges(lst):
     """Format a list of integers into range strings."""
     if not lst:
-        return []
+        return ""
     ranges = []
     start = lst[0]
     for i in range(1, len(lst)):
@@ -131,4 +108,4 @@ def format_ranges(lst):
             ranges.append(f"{start}" if start == end else f"{start}-{end}")
             start = lst[i]
     ranges.append(f"{start}" if start == lst[-1] else f"{start}-{lst[-1]}")
-    return ranges
+    return ", ".join(ranges)
