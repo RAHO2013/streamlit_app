@@ -62,8 +62,13 @@ def display_comparison():
                 Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
             ).reset_index()
 
-            # Split Student Order ranges into separate columns
-            summary_table[['Student_Order_From', 'Student_Order_To']] = summary_table['Student_Order_Ranges'].str.split('-', expand=True)
+            # Split Student Order ranges into separate columns and ensure they are numeric
+            summary_table[['Student_Order_From', 'Student_Order_To']] = summary_table['Student_Order_Ranges'].str.extract(r'(\d+)-(\d+)', expand=True)
+            summary_table['Student_Order_From'] = pd.to_numeric(summary_table['Student_Order_From'], errors='coerce')
+            summary_table['Student_Order_To'] = pd.to_numeric(summary_table['Student_Order_To'], errors='coerce')
+
+            # Sort the summary table by numeric columns for correct ascending order
+            summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
 
             # Tabs for displaying data
             tab1, tab2, tab3 = st.tabs([
