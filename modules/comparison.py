@@ -33,11 +33,13 @@ def display_comparison():
                 "Student Order"
             ]
 
-            if len(comparison_sheet.columns) >= len(expected_columns):
-                comparison_sheet.columns = expected_columns[:len(comparison_sheet.columns)]
-            else:
+            # Validate the uploaded file has enough columns
+            if len(comparison_sheet.columns) < len(expected_columns):
                 st.error("Uploaded file must have at least 7 columns.")
                 return
+
+            # Rename only the first 7 columns to match expected structure
+            comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
             # Create MAIN CODE in the comparison file
             comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].astype(str) + "_" + comparison_sheet['COURSE CODE'].astype(str)
