@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os  # Import os for file existence checks
 
 def display_excel_ranking():
     st.title("Order Creation with Excel")
@@ -26,7 +27,7 @@ def display_excel_ranking():
 
             # Load MASTER EXCEL file
             MASTER_FILE = "data/MASTER EXCEL.xlsx"
-            if not st.file_exists(MASTER_FILE):
+            if not os.path.exists(MASTER_FILE):  # Use os.path.exists instead of st.file_exists
                 st.error(f"Master file '{MASTER_FILE}' is missing in the project folder!")
                 return
 
