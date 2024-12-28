@@ -1,8 +1,21 @@
 import streamlit as st
 import pandas as pd
 
-def display_order_creation(master_sheet):
+def display_order_creation():
     st.title("Order Creation Dashboard")
+
+    # Load MASTER EXCEL file
+    MASTER_FILE = "data/MASTER EXCEL.xlsx"
+    if not st.file_exists(MASTER_FILE):
+        st.error(f"Master file '{MASTER_FILE}' is missing in the project folder!")
+        return
+
+    master_sheet = pd.read_excel(MASTER_FILE, sheet_name='Sheet1')
+
+    # Normalize `State`, `Program`, and `TYPE` columns
+    master_sheet['State'] = master_sheet['State'].str.strip().str.upper()
+    master_sheet['Program'] = master_sheet['Program'].str.strip().str.upper()
+    master_sheet['TYPE'] = master_sheet['TYPE'].astype(str).str.strip().str.upper()
 
     # Ensure necessary columns exist
     if {'State', 'Program', 'College Name', 'TYPE'}.issubset(master_sheet.columns):
