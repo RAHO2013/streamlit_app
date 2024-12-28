@@ -19,7 +19,7 @@ def display_comparison():
 
     if uploaded_file:
         try:
-            comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1')
+            comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1', dtype=str)
 
             # Rename columns in the uploaded file
             st.write("### Renaming Columns in Uploaded File")
@@ -42,11 +42,11 @@ def display_comparison():
             comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
             # Create MAIN CODE in the comparison file
-            comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].astype(str) + "_" + comparison_sheet['COURSE CODE'].astype(str)
+            comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip()
 
             # Create MAIN CODE in the master sheet
             if {'MCC College Code', 'COURSE CODE'}.issubset(master_sheet.columns):
-                master_sheet['MAIN CODE'] = master_sheet['MCC College Code'].astype(str) + "_" + master_sheet['COURSE CODE'].astype(str)
+                master_sheet['MAIN CODE'] = master_sheet['MCC College Code'].astype(str).str.strip() + "_" + master_sheet['COURSE CODE'].astype(str).str.strip()
 
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
