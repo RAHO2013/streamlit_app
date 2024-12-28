@@ -1,33 +1,32 @@
 import streamlit as st
 
-# Define navigation logic
+# Sidebar Navigation
 def navigate():
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio(
+    return st.sidebar.radio(
         "Select a page:",
         ["Home", "Master Data", "Order Creation", "Order Creation with Excel", "Order Comparison", "Fee Checking"]
     )
-    return page
 
 # Run the selected page
 def run_page(page):
     if page == "Home":
-        from pages.home import display_home
+        from modules.home import display_home  # Updated path
         display_home()
     elif page == "Master Data":
-        from pages.master_data import display_master_data
+        from modules.master_data import display_master_data  # Updated path
         display_master_data()
     elif page == "Order Creation":
-        from pages.order_creation import display_order_creation
+        from modules.order_creation import display_order_creation  # Updated path
         display_order_creation()
     elif page == "Order Creation with Excel":
-        from pages.excel_ranking import display_excel_ranking
+        from modules.excel_ranking import display_excel_ranking  # Updated path
         display_excel_ranking()
     elif page == "Order Comparison":
-        from pages.comparison import display_comparison
+        from modules.comparison import display_comparison  # Updated path
         display_comparison()
     elif page == "Fee Checking":
-        from pages.fee_checking import display_fee_checking
+        from modules.fee_checking import display_fee_checking  # Updated path
         display_fee_checking()
 
 # Main app logic
