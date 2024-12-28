@@ -44,6 +44,7 @@ def display_comparison():
             # Ensure Student Order is numeric and starts at 1
             comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
             comparison_sheet.sort_values(by='Student Order', inplace=True)
+            comparison_sheet['Student Order'] = comparison_sheet['Student Order'].fillna(0).astype(int)
 
             if comparison_sheet['Student Order'].min() != 1:
                 st.warning("'Student Order' should start from 1. Please check the uploaded file.")
@@ -121,7 +122,7 @@ def display_comparison():
                 state_opted = merged_data.groupby('State').apply(
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
-                        'Student_Orders': format_ranges(x['Student Order'].sort_values().tolist())
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
                     })
                 ).reset_index()
                 state_opted['Student_Orders'] = state_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -133,7 +134,7 @@ def display_comparison():
                 program_opted = merged_data.groupby('Program_uploaded').apply(
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
-                        'Student_Orders': format_ranges(x['Student Order'].sort_values().tolist())
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
                     })
                 ).reset_index()
                 program_opted['Student_Orders'] = program_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -145,7 +146,7 @@ def display_comparison():
                 type_opted = merged_data.groupby('TYPE_uploaded').apply(
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
-                        'Student_Orders': format_ranges(x['Student Order'].sort_values().tolist())
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
                     })
                 ).reset_index()
                 type_opted['Student_Orders'] = type_opted['Student_Orders'].apply(lambda x: ', '.join(x))
