@@ -122,7 +122,8 @@ def display_comparison():
                 state_opted = merged_data.groupby('State').apply(
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
-                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
+                        'Helper_Order': ', '.join(map(str, x['Sort Helper'].dropna().astype(int).tolist()))
                     })
                 ).reset_index()
                 state_opted['Student_Orders'] = state_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -134,7 +135,8 @@ def display_comparison():
                 program_opted = merged_data.groupby('Program_uploaded').apply(
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
-                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
+                        'Helper_Order': ', '.join(map(str, x['Sort Helper'].dropna().astype(int).tolist()))
                     })
                 ).reset_index()
                 program_opted['Student_Orders'] = program_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -146,7 +148,8 @@ def display_comparison():
                 type_opted = merged_data.groupby('TYPE_uploaded').apply(
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
-                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
+                        'Helper_Order': ', '.join(map(str, x['Sort Helper'].dropna().astype(int).tolist()))
                     })
                 ).reset_index()
                 type_opted['Student_Orders'] = type_opted['Student_Orders'].apply(lambda x: ', '.join(x))
