@@ -57,16 +57,12 @@ def display_comparison():
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
             # Tabs for validation and dashboard
-            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
                 "Merged Data",
-                "Unmatched Rows",
-                "Duplicates",
-                "Missing Values",
-                "Student Order Validation",
+                "Validation",
                 "State Opted",
                 "Program Opted",
-                "Type Opted",
-                "Summary Statistics"
+                "Type Opted"
             ])
 
             # Tab 1: Display merged data
@@ -74,53 +70,51 @@ def display_comparison():
                 st.write("### Merged Table Based on MAIN CODE")
                 st.dataframe(merged_data)
 
-            # Tab 2: Check for unmatched rows
+            # Tab 2: Validation (Dropdowns)
             with tab2:
-                missing_in_master = comparison_sheet[~comparison_sheet['MAIN CODE'].isin(master_sheet['MAIN CODE'])]
-                missing_in_comparison = master_sheet[~master_sheet['MAIN CODE'].isin(comparison_sheet['MAIN CODE'])]
+                with st.expander("Unmatched Rows"):
+                    missing_in_master = comparison_sheet[~comparison_sheet['MAIN CODE'].isin(master_sheet['MAIN CODE'])]
+                    missing_in_comparison = master_sheet[~master_sheet['MAIN CODE'].isin(comparison_sheet['MAIN CODE'])]
 
-                if not missing_in_master.empty:
-                    st.write("### Rows in Uploaded File with Missing Matches in Master File")
-                    st.dataframe(missing_in_master)
+                    if not missing_in_master.empty:
+                        st.write("### Rows in Uploaded File with Missing Matches in Master File")
+                        st.dataframe(missing_in_master)
 
-                if not missing_in_comparison.empty:
-                    st.write("### Rows in Master File with Missing Matches in Uploaded File")
-                    st.dataframe(missing_in_comparison)
+                    if not missing_in_comparison.empty:
+                        st.write("### Rows in Master File with Missing Matches in Uploaded File")
+                        st.dataframe(missing_in_comparison)
 
-            # Tab 3: Check for duplicates
+                with st.expander("Duplicates"):
+                    duplicate_in_uploaded = comparison_sheet[comparison_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
+                    duplicate_in_master = master_sheet[master_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
+
+                    if not duplicate_in_uploaded.empty:
+                        st.write("### Duplicate MAIN CODE Entries in Uploaded File")
+                        st.dataframe(duplicate_in_uploaded)
+
+                    if not duplicate_in_master.empty:
+                        st.write("### Duplicate MAIN CODE Entries in Master File")
+                        st.dataframe(duplicate_in_master)
+
+                with st.expander("Missing Values"):
+                    missing_values = merged_data[merged_data.isnull().any(axis=1)]
+
+                    if not missing_values.empty:
+                        st.write("### Rows with Missing Values in Merged Data")
+                        st.dataframe(missing_values)
+                    else:
+                        st.success("No missing values found in the merged data!")
+
+                with st.expander("Student Order Validation"):
+                    if comparison_sheet['Student Order'].isnull().any():
+                        st.write("### Invalid or Missing 'Student Order' Entries")
+                        invalid_student_order = comparison_sheet[comparison_sheet['Student Order'].isnull()]
+                        st.dataframe(invalid_student_order)
+                    else:
+                        st.success("'Student Order' values are valid and properly formatted.")
+
+            # Tab 3: State Opted
             with tab3:
-                duplicate_in_uploaded = comparison_sheet[comparison_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
-                duplicate_in_master = master_sheet[master_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
-
-                if not duplicate_in_uploaded.empty:
-                    st.write("### Duplicate MAIN CODE Entries in Uploaded File")
-                    st.dataframe(duplicate_in_uploaded)
-
-                if not duplicate_in_master.empty:
-                    st.write("### Duplicate MAIN CODE Entries in Master File")
-                    st.dataframe(duplicate_in_master)
-
-            # Tab 4: Check for missing values
-            with tab4:
-                missing_values = merged_data[merged_data.isnull().any(axis=1)]
-
-                if not missing_values.empty:
-                    st.write("### Rows with Missing Values in Merged Data")
-                    st.dataframe(missing_values)
-                else:
-                    st.success("No missing values found in the merged data!")
-
-            # Tab 5: Validate Student Order
-            with tab5:
-                if comparison_sheet['Student Order'].isnull().any():
-                    st.write("### Invalid or Missing 'Student Order' Entries")
-                    invalid_student_order = comparison_sheet[comparison_sheet['Student Order'].isnull()]
-                    st.dataframe(invalid_student_order)
-                else:
-                    st.success("'Student Order' values are valid and properly formatted.")
-
-            # Tab 6: State Opted
-            with tab6:
                 st.write("### State Opted")
                 state_opted = merged_data.groupby('State').agg(
                     Options_Filled=('MAIN CODE', 'count'),
@@ -128,8 +122,8 @@ def display_comparison():
                 ).reset_index()
                 st.dataframe(state_opted)
 
-            # Tab 7: Program Opted
-            with tab7:
+            # Tab 4: Program Opted
+            with tab4:
                 st.write("### Program Opted")
                 program_opted = merged_data.groupby('Program_uploaded').agg(
                     Options_Filled=('MAIN CODE', 'count'),
@@ -137,25 +131,14 @@ def display_comparison():
                 ).reset_index()
                 st.dataframe(program_opted)
 
-            # Tab 8: Type Opted
-            with tab8:
+            # Tab 5: Type Opted
+            with tab5:
                 st.write("### Type Opted")
                 type_opted = merged_data.groupby('TYPE_uploaded').agg(
                     Options_Filled=('MAIN CODE', 'count'),
                     Student_Orders=('Student Order', lambda x: ', '.join(map(str, sorted(x))))
                 ).reset_index()
                 st.dataframe(type_opted)
-
-            # Tab 9: Summary Statistics
-            with tab9:
-                st.write("### Summary Statistics")
-                summary_stats = merged_data.agg(
-                    Total_Options_Filled=('MAIN CODE', 'count'),
-                    Unique_States=('State', 'nunique'),
-                    Unique_Programs=('Program_uploaded', 'nunique'),
-                    Unique_Types=('TYPE_uploaded', 'nunique')
-                ).reset_index()
-                st.dataframe(summary_stats)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
