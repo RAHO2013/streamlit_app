@@ -5,12 +5,12 @@ def navigate():
     st.sidebar.title("Navigation")
 
     # Home Page as a separate section
-    with st.sidebar.expander("🏠 Home", expanded=True):
+    with st.sidebar.expander("🏠 Home", expanded=False):
         if st.button("Home"):
             st.session_state.page = "home"
 
     # Data Management Expander
-    with st.sidebar.expander("📊 Data Management", expanded=True):
+    with st.sidebar.expander("📊 Data Management", expanded=False):
         if st.button("Master Data"):
             st.session_state.page = "master_data"
 
