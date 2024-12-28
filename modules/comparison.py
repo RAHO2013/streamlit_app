@@ -57,13 +57,16 @@ def display_comparison():
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
             # Tabs for validation and dashboard
-            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
                 "Merged Data",
                 "Unmatched Rows",
                 "Duplicates",
                 "Missing Values",
                 "Student Order Validation",
-                "Dashboard"
+                "State Opted",
+                "Program Opted",
+                "Type Opted",
+                "Summary Statistics"
             ])
 
             # Tab 1: Display merged data
@@ -116,24 +119,43 @@ def display_comparison():
                 else:
                     st.success("'Student Order' values are valid and properly formatted.")
 
-            # Tab 6: Dashboard for State, Program, and Type Opted
+            # Tab 6: State Opted
             with tab6:
-                st.write("### Dashboard")
+                st.write("### State Opted")
+                state_opted = merged_data.groupby('State').agg(
+                    Options_Filled=('MAIN CODE', 'count'),
+                    Student_Orders=('Student Order', lambda x: ', '.join(map(str, sorted(x))))
+                ).reset_index()
+                st.dataframe(state_opted)
 
-                # State Opted (From Master Sheet)
-                state_count = merged_data['State'].value_counts()
-                st.write("#### State Opted")
-                st.bar_chart(state_count)
+            # Tab 7: Program Opted
+            with tab7:
+                st.write("### Program Opted")
+                program_opted = merged_data.groupby('Program_uploaded').agg(
+                    Options_Filled=('MAIN CODE', 'count'),
+                    Student_Orders=('Student Order', lambda x: ', '.join(map(str, sorted(x))))
+                ).reset_index()
+                st.dataframe(program_opted)
 
-                # Program Opted
-                program_count = merged_data['Program_uploaded'].value_counts()
-                st.write("#### Program Opted")
-                st.bar_chart(program_count)
+            # Tab 8: Type Opted
+            with tab8:
+                st.write("### Type Opted")
+                type_opted = merged_data.groupby('TYPE_uploaded').agg(
+                    Options_Filled=('MAIN CODE', 'count'),
+                    Student_Orders=('Student Order', lambda x: ', '.join(map(str, sorted(x))))
+                ).reset_index()
+                st.dataframe(type_opted)
 
-                # Type Opted
-                type_count = merged_data['TYPE_uploaded'].value_counts()
-                st.write("#### Type Opted")
-                st.bar_chart(type_count)
+            # Tab 9: Summary Statistics
+            with tab9:
+                st.write("### Summary Statistics")
+                summary_stats = merged_data.agg(
+                    Total_Options_Filled=('MAIN CODE', 'count'),
+                    Unique_States=('State', 'nunique'),
+                    Unique_Programs=('Program_uploaded', 'nunique'),
+                    Unique_Types=('TYPE_uploaded', 'nunique')
+                ).reset_index()
+                st.dataframe(summary_stats)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
