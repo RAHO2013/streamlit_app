@@ -62,9 +62,12 @@ def display_comparison():
             ).reset_index()
 
             # Tabs for displaying data
-            tab1, tab2 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
                 "Merged Data",
-                "State, Program, Type with Student Orders"
+                "State, Program, Type with Student Orders",
+                "Validation - Unmatched Rows",
+                "Validation - Duplicates",
+                "Validation - Missing Values"
             ])
 
             # Tab 1: Merged Data
@@ -76,6 +79,45 @@ def display_comparison():
             with tab2:
                 st.write("### State, Program, Type with Student Orders")
                 st.dataframe(summary_table)
+
+            # Tab 3: Validation - Unmatched Rows
+            with tab3:
+                st.write("### Unmatched Rows")
+                missing_in_master = comparison_sheet[~comparison_sheet['MAIN CODE'].isin(master_sheet['MAIN CODE'])]
+                missing_in_comparison = master_sheet[~master_sheet['MAIN CODE'].isin(comparison_sheet['MAIN CODE'])]
+
+                if not missing_in_master.empty:
+                    st.write("### Rows in Uploaded File with Missing Matches in Master File")
+                    st.dataframe(missing_in_master)
+
+                if not missing_in_comparison.empty:
+                    st.write("### Rows in Master File with Missing Matches in Uploaded File")
+                    st.dataframe(missing_in_comparison)
+
+            # Tab 4: Validation - Duplicates
+            with tab4:
+                st.write("### Duplicates")
+                duplicate_in_uploaded = comparison_sheet[comparison_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
+                duplicate_in_master = master_sheet[master_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
+
+                if not duplicate_in_uploaded.empty:
+                    st.write("### Duplicate MAIN CODE Entries in Uploaded File")
+                    st.dataframe(duplicate_in_uploaded)
+
+                if not duplicate_in_master.empty:
+                    st.write("### Duplicate MAIN CODE Entries in Master File")
+                    st.dataframe(duplicate_in_master)
+
+            # Tab 5: Validation - Missing Values
+            with tab5:
+                st.write("### Missing Values")
+                missing_values = merged_data[merged_data.isnull().any(axis=1)]
+
+                if not missing_values.empty:
+                    st.write("### Rows with Missing Values in Merged Data")
+                    st.dataframe(missing_values)
+                else:
+                    st.success("No missing values found in the merged data!")
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
