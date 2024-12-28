@@ -61,6 +61,21 @@ def display_comparison():
                 Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().astype(int).tolist())))
             ).reset_index()
 
+            # Add a helper column for group rankings
+            def assign_group_ranks(data):
+                data = data.sort_values('Student_Orders', key=lambda x: x.str.split('-').str[0].astype(int))
+                data['Helper_Group'] = (data['Student_Orders']
+                                        .str.split('-')
+                                        .str[0]
+                                        .astype(int)
+                                        .diff()
+                                        .fillna(0)
+                                        .gt(1)
+                                        .cumsum() + 1)
+                return data
+
+            summary_table = assign_group_ranks(summary_table)
+
             # Tabs for displaying data
             tab1, tab2, tab3 = st.tabs([
                 "Merged Data",
@@ -75,7 +90,7 @@ def display_comparison():
 
             # Tab 2: Summary Table
             with tab2:
-                st.write("### State, Program, Type with Student Orders")
+                st.write("### State, Program, Type with Student Orders and Helper Groups")
                 st.dataframe(summary_table)
 
             # Tab 3: Validation
