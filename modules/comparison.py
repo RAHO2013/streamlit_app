@@ -57,12 +57,13 @@ def display_comparison():
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
             # Tabs for validation and dashboard
-            tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
                 "Merged Data",
                 "Validation",
                 "State Opted",
                 "Program Opted",
-                "Type Opted"
+                "Type Opted",
+                "Summary Statistics"
             ])
 
             # Tab 1: Display merged data
@@ -139,6 +140,29 @@ def display_comparison():
                     Student_Orders=('Student Order', lambda x: ', '.join(map(str, sorted(x))))
                 ).reset_index()
                 st.dataframe(type_opted)
+
+            # Tab 6: Summary Statistics
+            with tab6:
+                st.write("### Enhanced Summary Statistics")
+                total_options_filled = merged_data['MAIN CODE'].count()
+                unique_states = merged_data['State'].nunique()
+                unique_programs = merged_data['Program_uploaded'].nunique()
+                unique_types = merged_data['TYPE_uploaded'].nunique()
+                average_student_order = merged_data['Student Order'].mean()
+                max_student_order = merged_data['Student Order'].max()
+                min_student_order = merged_data['Student Order'].min()
+
+                summary_stats = {
+                    "Total Options Filled": total_options_filled,
+                    "Unique States": unique_states,
+                    "Unique Programs": unique_programs,
+                    "Unique Types": unique_types,
+                    "Average Student Order": average_student_order,
+                    "Max Student Order": max_student_order,
+                    "Min Student Order": min_student_order
+                }
+
+                st.write(pd.DataFrame(summary_stats.items(), columns=["Metric", "Value"]))
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
