@@ -48,9 +48,6 @@ def display_comparison():
             if comparison_sheet['Student Order'].min() != 1:
                 st.warning("'Student Order' should start from 1. Please check the uploaded file.")
 
-            # Assign grouping based on gaps in Student Order
-            comparison_sheet['Helper_Order'] = (comparison_sheet['Student Order'].diff() > 1).cumsum() + 1
-
             # Create MAIN CODE in the comparison file
             comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip()
 
@@ -60,6 +57,14 @@ def display_comparison():
 
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
+
+            # Assign grouping based on State and gaps in Student Order
+            def assign_group_numbers(df):
+                df = df.sort_values(by='Student Order')
+                df['Helper_Order'] = (df['Student Order'].diff() > 1).cumsum() + 1
+                return df
+
+            merged_data = merged_data.groupby('State', group_keys=False).apply(assign_group_numbers)
 
             # Tabs for validation and dashboard
             tab1, tab2, tab3, tab4, tab5 = st.tabs([
