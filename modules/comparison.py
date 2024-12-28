@@ -59,8 +59,11 @@ def display_comparison():
             # Combine State, Program, Type, and Student Orders into a single table
             summary_table = merged_data.groupby(['State', 'Program_uploaded', 'TYPE_uploaded']).agg(
                 Options_Filled=('MAIN CODE', 'count'),
-                Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().astype(int).tolist())))
+                Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
             ).reset_index()
+
+            # Split Student Order ranges into separate columns
+            summary_table[['Student_Order_From', 'Student_Order_To']] = summary_table['Student_Order_Ranges'].str.split('-', expand=True)
 
             # Tabs for displaying data
             tab1, tab2, tab3 = st.tabs([
@@ -122,8 +125,8 @@ def display_comparison():
     else:
         st.info("Please upload an Excel file for comparison.")
 
-def format_ranges(lst):
-    """Format a list of integers into range strings."""
+def split_ranges(lst):
+    """Split a list of integers into start and end ranges."""
     if not lst:
         return ""
     ranges = []
@@ -131,7 +134,7 @@ def format_ranges(lst):
     for i in range(1, len(lst)):
         if lst[i] != lst[i - 1] + 1:
             end = lst[i - 1]
-            ranges.append(f"{start}" if start == end else f"{start}-{end}")
+            ranges.append(f"{start}-{end}" if start != end else f"{start}")
             start = lst[i]
-    ranges.append(f"{start}" if start == lst[-1] else f"{start}-{lst[-1]}")
+    ranges.append(f"{start}-{lst[-1]}" if start != lst[-1] else f"{start}")
     return ", ".join(ranges)
