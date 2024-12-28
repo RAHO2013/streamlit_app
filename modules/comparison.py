@@ -57,13 +57,12 @@ def display_comparison():
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
             # Tabs for validation and dashboard
-            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
                 "Merged Data",
                 "Validation",
                 "State Opted",
                 "Program Opted",
-                "Type Opted",
-                "Summary Statistics"
+                "Type Opted"
             ])
 
             # Tab 1: Display merged data
@@ -119,7 +118,7 @@ def display_comparison():
                 st.write("### State Opted")
                 state_opted = merged_data.groupby('State').agg(
                     Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: ', '.join(map(str, sorted(x))))
+                    Student_Orders=('Student Order', lambda x: ', '.join(format_ranges(sorted(x))))
                 ).reset_index()
                 st.dataframe(state_opted)
 
@@ -128,7 +127,7 @@ def display_comparison():
                 st.write("### Program Opted")
                 program_opted = merged_data.groupby('Program_uploaded').agg(
                     Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: ', '.join(map(str, sorted(x))))
+                    Student_Orders=('Student Order', lambda x: ', '.join(format_ranges(sorted(x))))
                 ).reset_index()
                 st.dataframe(program_opted)
 
@@ -137,34 +136,25 @@ def display_comparison():
                 st.write("### Type Opted")
                 type_opted = merged_data.groupby('TYPE_uploaded').agg(
                     Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: ', '.join(map(str, sorted(x))))
+                    Student_Orders=('Student Order', lambda x: ', '.join(format_ranges(sorted(x))))
                 ).reset_index()
                 st.dataframe(type_opted)
-
-            # Tab 6: Summary Statistics
-            with tab6:
-                st.write("### Enhanced Summary Statistics")
-                total_options_filled = merged_data['MAIN CODE'].count()
-                unique_states = merged_data['State'].nunique()
-                unique_programs = merged_data['Program_uploaded'].nunique()
-                unique_types = merged_data['TYPE_uploaded'].nunique()
-                average_student_order = merged_data['Student Order'].mean()
-                max_student_order = merged_data['Student Order'].max()
-                min_student_order = merged_data['Student Order'].min()
-
-                summary_stats = {
-                    "Total Options Filled": total_options_filled,
-                    "Unique States": unique_states,
-                    "Unique Programs": unique_programs,
-                    "Unique Types": unique_types,
-                    "Average Student Order": average_student_order,
-                    "Max Student Order": max_student_order,
-                    "Min Student Order": min_student_order
-                }
-
-                st.write(pd.DataFrame(summary_stats.items(), columns=["Metric", "Value"]))
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
     else:
         st.info("Please upload an Excel file for comparison.")
+
+def format_ranges(lst):
+    """Format a list of integers into range strings."""
+    if not lst:
+        return ""
+    ranges = []
+    start = lst[0]
+    for i in range(1, len(lst)):
+        if lst[i] != lst[i - 1] + 1:
+            end = lst[i - 1]
+            ranges.append(f"{start}" if start == end else f"{start}-{end}")
+            start = lst[i]
+    ranges.append(f"{start}" if start == lst[-1] else f"{start}-{lst[-1]}")
+    return ranges
