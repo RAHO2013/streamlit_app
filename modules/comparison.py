@@ -69,9 +69,58 @@ def display_comparison():
                 Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().tolist())))
             ).reset_index()
 
-            # Display combined summary
-            st.write("### Combined State and Program Opted Summary")
-            st.dataframe(summary_table)
+            # Tabs for displaying data
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
+                "Merged Data",
+                "State Opted",
+                "Program Opted",
+                "Type Opted",
+                "Student Orders"
+            ])
+
+            # Tab 1: Merged Data
+            with tab1:
+                st.write("### Merged Data")
+                st.dataframe(merged_data)
+
+            # Tab 2: State Opted
+            with tab2:
+                st.write("### State Opted")
+                state_opted = merged_data.groupby('State').apply(
+                    lambda x: pd.Series({
+                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
+                    })
+                ).reset_index()
+                st.dataframe(state_opted)
+
+            # Tab 3: Program Opted
+            with tab3:
+                st.write("### Program Opted")
+                program_opted = merged_data.groupby('Program_uploaded').apply(
+                    lambda x: pd.Series({
+                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
+                    })
+                ).reset_index()
+                st.dataframe(program_opted)
+
+            # Tab 4: Type Opted
+            with tab4:
+                st.write("### Type Opted")
+                type_opted = merged_data.groupby('TYPE_uploaded').apply(
+                    lambda x: pd.Series({
+                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
+                    })
+                ).reset_index()
+                st.dataframe(type_opted)
+
+            # Tab 5: Student Orders
+            with tab5:
+                st.write("### Student Orders")
+                student_orders = merged_data[['Student Order', 'State', 'Program_uploaded', 'TYPE_uploaded']]
+                st.dataframe(student_orders.sort_values(by='Student Order'))
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
