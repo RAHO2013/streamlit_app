@@ -58,13 +58,14 @@ def display_comparison():
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
-            # Assign grouping based on State and gaps in Student Order
-            def assign_group_numbers(df):
+            # Assign ranks for State and Program
+            def assign_state_program_ranks(df, group_column):
                 df = df.sort_values(by='Student Order')
-                df['Helper_Order'] = (df['Student Order'].diff() > 1).cumsum() + 1
+                df['Rank'] = (df['Student Order'].diff() > 1).cumsum() + 1
                 return df
 
-            merged_data = merged_data.groupby('State', group_keys=False).apply(assign_group_numbers)
+            merged_data = merged_data.groupby('State', group_keys=False).apply(lambda x: assign_state_program_ranks(x, 'State'))
+            merged_data = merged_data.groupby('Program_uploaded', group_keys=False).apply(lambda x: assign_state_program_ranks(x, 'Program_uploaded'))
 
             # Tabs for validation and dashboard
             tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -130,7 +131,7 @@ def display_comparison():
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
                         'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Helper_Group': ', '.join(map(str, sorted(x['Helper_Order'].dropna().unique())))
+                        'Ranks': ', '.join(map(str, sorted(x['Rank'].dropna().unique())))
                     })
                 ).reset_index()
                 state_opted['Student_Orders'] = state_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -143,7 +144,7 @@ def display_comparison():
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
                         'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Helper_Group': ', '.join(map(str, sorted(x['Helper_Order'].dropna().unique())))
+                        'Ranks': ', '.join(map(str, sorted(x['Rank'].dropna().unique())))
                     })
                 ).reset_index()
                 program_opted['Student_Orders'] = program_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -155,8 +156,7 @@ def display_comparison():
                 type_opted = merged_data.groupby('TYPE_uploaded').apply(
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
-                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Helper_Group': ', '.join(map(str, sorted(x['Helper_Order'].dropna().unique())))
+                        'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
                     })
                 ).reset_index()
                 type_opted['Student_Orders'] = type_opted['Student_Orders'].apply(lambda x: ', '.join(x))
