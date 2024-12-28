@@ -22,7 +22,6 @@ def display_comparison():
             comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1', dtype=str)
 
             # Rename columns in the uploaded file
-            st.write("### Renaming Columns in Uploaded File")
             expected_columns = [
                 "MCC College Code",
                 "College Name",
@@ -33,20 +32,12 @@ def display_comparison():
                 "Student Order"
             ]
 
-            # Validate the uploaded file has enough columns
-            if len(comparison_sheet.columns) < len(expected_columns):
-                st.error("Uploaded file must have at least 7 columns.")
-                return
-
             # Rename only the first 7 columns to match expected structure
             comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
             # Ensure Student Order is numeric and starts at 1
             comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
             comparison_sheet.sort_values(by='Student Order', inplace=True)
-
-            if comparison_sheet['Student Order'].min() != 1:
-                st.warning("'Student Order' should start from 1. Please check the uploaded file.")
 
             # Create MAIN CODE in the comparison file
             comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip()
@@ -59,13 +50,13 @@ def display_comparison():
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
             # Assign ranks for State and Program
-            def assign_state_program_ranks(df, group_column):
+            def assign_state_program_ranks(df):
                 df = df.sort_values(by='Student Order')
-                df['Rank'] = (df['Student Order'].diff() > 1).cumsum() + 1
+                df['Rank'] = (df['MAIN CODE'] != df['MAIN CODE'].shift()).cumsum()
                 return df
 
-            merged_data = merged_data.groupby('State', group_keys=False).apply(lambda x: assign_state_program_ranks(x, 'State'))
-            merged_data = merged_data.groupby('Program_uploaded', group_keys=False).apply(lambda x: assign_state_program_ranks(x, 'Program_uploaded'))
+            merged_data = merged_data.groupby('State', group_keys=False).apply(assign_state_program_ranks)
+            merged_data = merged_data.groupby('Program_uploaded', group_keys=False).apply(assign_state_program_ranks)
 
             # Tabs for validation and dashboard
             tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -83,55 +74,16 @@ def display_comparison():
 
             # Tab 2: Validation (Dropdowns)
             with tab2:
-                with st.expander("Unmatched Rows"):
-                    missing_in_master = comparison_sheet[~comparison_sheet['MAIN CODE'].isin(master_sheet['MAIN CODE'])]
-                    missing_in_comparison = master_sheet[~master_sheet['MAIN CODE'].isin(comparison_sheet['MAIN CODE'])]
-
-                    if not missing_in_master.empty:
-                        st.write("### Rows in Uploaded File with Missing Matches in Master File")
-                        st.dataframe(missing_in_master)
-
-                    if not missing_in_comparison.empty:
-                        st.write("### Rows in Master File with Missing Matches in Uploaded File")
-                        st.dataframe(missing_in_comparison)
-
-                with st.expander("Duplicates"):
-                    duplicate_in_uploaded = comparison_sheet[comparison_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
-                    duplicate_in_master = master_sheet[master_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
-
-                    if not duplicate_in_uploaded.empty:
-                        st.write("### Duplicate MAIN CODE Entries in Uploaded File")
-                        st.dataframe(duplicate_in_uploaded)
-
-                    if not duplicate_in_master.empty:
-                        st.write("### Duplicate MAIN CODE Entries in Master File")
-                        st.dataframe(duplicate_in_master)
-
-                with st.expander("Missing Values"):
-                    missing_values = merged_data[merged_data.isnull().any(axis=1)]
-
-                    if not missing_values.empty:
-                        st.write("### Rows with Missing Values in Merged Data")
-                        st.dataframe(missing_values)
-                    else:
-                        st.success("No missing values found in the merged data!")
-
-                with st.expander("Student Order Validation"):
-                    if comparison_sheet['Student Order'].isnull().any():
-                        st.write("### Invalid or Missing 'Student Order' Entries")
-                        invalid_student_order = comparison_sheet[comparison_sheet['Student Order'].isnull()]
-                        st.dataframe(invalid_student_order)
-                    else:
-                        st.success("'Student Order' values are valid and properly formatted.")
+                st.write("### Validation")
 
             # Tab 3: State Opted
             with tab3:
                 st.write("### State Opted")
                 state_opted = merged_data.groupby('State').apply(
                     lambda x: pd.Series({
-                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Options_Filled': x['MAIN CODE'].nunique(),
                         'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Ranks': ', '.join(map(str, sorted(x['Rank'].dropna().unique())))
+                        'Ranks': ', '.join(map(str, x['Rank'].unique()))
                     })
                 ).reset_index()
                 state_opted['Student_Orders'] = state_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -142,9 +94,9 @@ def display_comparison():
                 st.write("### Program Opted")
                 program_opted = merged_data.groupby('Program_uploaded').apply(
                     lambda x: pd.Series({
-                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Options_Filled': x['MAIN CODE'].nunique(),
                         'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Ranks': ', '.join(map(str, sorted(x['Rank'].dropna().unique())))
+                        'Ranks': ', '.join(map(str, x['Rank'].unique()))
                     })
                 ).reset_index()
                 program_opted['Student_Orders'] = program_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -155,7 +107,7 @@ def display_comparison():
                 st.write("### Type Opted")
                 type_opted = merged_data.groupby('TYPE_uploaded').apply(
                     lambda x: pd.Series({
-                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Options_Filled': x['MAIN CODE'].nunique(),
                         'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist()))
                     })
                 ).reset_index()
