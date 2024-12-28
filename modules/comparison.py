@@ -41,6 +41,11 @@ def display_comparison():
             # Rename only the first 7 columns to match expected structure
             comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
+            # Ensure Student Order is numeric and starts at 1
+            comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
+            if comparison_sheet['Student Order'].min() != 1:
+                st.warning("'Student Order' should start from 1. Please check the uploaded file.")
+
             # Create MAIN CODE in the comparison file
             comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip()
 
@@ -52,11 +57,12 @@ def display_comparison():
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
             # Tabs for validation and merged data display
-            tab1, tab2, tab3, tab4 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
                 "Merged Data",
                 "Unmatched Rows",
                 "Duplicates",
-                "Missing Values"
+                "Missing Values",
+                "Student Order Validation"
             ])
 
             # Tab 1: Display merged data
@@ -99,6 +105,15 @@ def display_comparison():
                     st.dataframe(missing_values)
                 else:
                     st.success("No missing values found in the merged data!")
+
+            # Tab 5: Validate Student Order
+            with tab5:
+                if comparison_sheet['Student Order'].isnull().any():
+                    st.write("### Invalid or Missing 'Student Order' Entries")
+                    invalid_student_order = comparison_sheet[comparison_sheet['Student Order'].isnull()]
+                    st.dataframe(invalid_student_order)
+                else:
+                    st.success("'Student Order' values are valid and properly formatted.")
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
