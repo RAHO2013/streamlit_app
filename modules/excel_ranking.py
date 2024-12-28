@@ -8,18 +8,11 @@ def display_excel_ranking():
     # Path to the master file
     MASTER_FILE = os.path.join('data', 'MASTER EXCEL.xlsx')
 
-    # Check if the master file exists
     if not os.path.exists(MASTER_FILE):
         st.error(f"Master file '{MASTER_FILE}' is missing in the 'data/' folder!")
         return
 
-    # Load the master sheet
     master_sheet = pd.read_excel(MASTER_FILE, sheet_name='Sheet1')
-
-    # Normalize columns
-    master_sheet['State'] = master_sheet['State'].str.strip().str.upper()
-    master_sheet['Program'] = master_sheet['Program'].str.strip().str.upper()
-    master_sheet['TYPE'] = master_sheet['TYPE'].astype(str).str.strip().str.upper()
 
     # File upload section
     uploaded_file = st.file_uploader("Upload Excel File (with Two Sheets)", type=["xlsx"])
@@ -58,9 +51,22 @@ def display_excel_ranking():
             ).reset_index(drop=True)
             ordered_data['Order Number'] = range(1, len(ordered_data) + 1)
 
+            # Collapsible section to select columns to display
+            with st.expander("Select Columns to Display", expanded=True):
+                st.write("### Choose the columns you want to include in the ordered table:")
+                default_columns = ['MAIN CODE', 'Program', 'TYPE', 'State', 'College Name', 'Program Rank', 'State Rank', 'Order Number']
+                selected_columns = st.multiselect(
+                    "Select columns:",
+                    list(master_sheet.columns) + ['State Rank', 'Program Rank', 'Order Number'],
+                    default=default_columns
+                )
+
             # Display ordered table
-            st.write("### Ordered Table from Uploaded Excel")
-            st.dataframe(ordered_data[['MAIN CODE', 'Program', 'TYPE', 'State', 'College Name', 'Program Rank', 'State Rank', 'Order Number']])
+            if not selected_columns:
+                st.warning("Please select at least one column to display the table.")
+            else:
+                st.write("### Ordered Table from Uploaded Excel")
+                st.dataframe(ordered_data[selected_columns])
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
     else:
