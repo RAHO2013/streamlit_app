@@ -118,28 +118,37 @@ def display_comparison():
             # Tab 3: State Opted
             with tab3:
                 st.write("### State Opted")
-                state_opted = merged_data.groupby('State').agg(
-                    Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: ', '.join(format_ranges(sorted(x))))
+                state_opted = merged_data.groupby('State').apply(
+                    lambda x: pd.Series({
+                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Student_Orders': format_ranges(x['Student Order'].sort_values().tolist())
+                    })
                 ).reset_index()
+                state_opted['Student_Orders'] = state_opted['Student_Orders'].apply(lambda x: ', '.join(x))
                 st.dataframe(state_opted)
 
             # Tab 4: Program Opted
             with tab4:
                 st.write("### Program Opted")
-                program_opted = merged_data.groupby('Program_uploaded').agg(
-                    Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: ', '.join(format_ranges(sorted(x))))
+                program_opted = merged_data.groupby('Program_uploaded').apply(
+                    lambda x: pd.Series({
+                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Student_Orders': format_ranges(x['Student Order'].sort_values().tolist())
+                    })
                 ).reset_index()
+                program_opted['Student_Orders'] = program_opted['Student_Orders'].apply(lambda x: ', '.join(x))
                 st.dataframe(program_opted)
 
             # Tab 5: Type Opted
             with tab5:
                 st.write("### Type Opted")
-                type_opted = merged_data.groupby('TYPE_uploaded').agg(
-                    Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: ', '.join(format_ranges(sorted(x))))
+                type_opted = merged_data.groupby('TYPE_uploaded').apply(
+                    lambda x: pd.Series({
+                        'Options_Filled': x['MAIN CODE'].count(),
+                        'Student_Orders': format_ranges(x['Student Order'].sort_values().tolist())
+                    })
                 ).reset_index()
+                type_opted['Student_Orders'] = type_opted['Student_Orders'].apply(lambda x: ', '.join(x))
                 st.dataframe(type_opted)
 
         except Exception as e:
@@ -150,7 +159,7 @@ def display_comparison():
 def format_ranges(lst):
     """Format a list of integers into range strings."""
     if not lst:
-        return ""
+        return []
     ranges = []
     start = lst[0]
     for i in range(1, len(lst)):
