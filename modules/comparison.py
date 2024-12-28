@@ -22,6 +22,7 @@ def display_comparison():
             comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1', dtype=str)
 
             # Rename columns in the uploaded file
+            st.write("### Renaming Columns in Uploaded File")
             expected_columns = [
                 "MCC College Code",
                 "College Name",
@@ -32,9 +33,15 @@ def display_comparison():
                 "Student Order"
             ]
 
+            # Validate the uploaded file has enough columns
+            if len(comparison_sheet.columns) < len(expected_columns):
+                st.error("Uploaded file must have at least 7 columns.")
+                return
+
+            # Rename only the first 7 columns to match expected structure
             comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
-            # Ensure Student Order is numeric and sorted
+            # Ensure Student Order is numeric and starts at 1
             comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
             comparison_sheet.sort_values(by='Student Order', inplace=True)
 
@@ -48,48 +55,23 @@ def display_comparison():
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
-            # Function to assign contiguous ranks
-            def assign_ranks(group):
-                group = group.sort_values('Student Order')
-                group['Rank'] = (group['Student Order'].diff() > 1).cumsum() + 1
-                return group
+            # Combine Student Order, State, and Program Opted into a single table
+            def assign_combined_ranks(df):
+                df = df.sort_values('Student Order')
+                df['Rank'] = (df['Student Order'].diff() > 1).cumsum() + 1
+                return df
 
-            # Tabs for display
-            tab1, tab2, tab3, tab4 = st.tabs(["Merged Data", "State Opted", "Program Opted", "Type Opted"])
+            combined_data = merged_data.groupby(['State', 'Program_uploaded'], group_keys=False).apply(assign_combined_ranks)
 
-            # Tab 1: Merged Data
-            with tab1:
-                st.write("### Merged Data")
-                st.dataframe(merged_data)
+            # Create a summary table
+            summary_table = combined_data.groupby(['State', 'Program_uploaded', 'Rank']).agg(
+                Options_Filled=('MAIN CODE', 'count'),
+                Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().tolist())))
+            ).reset_index()
 
-            # Tab 2: State Opted
-            with tab2:
-                st.write("### State Opted")
-                state_grouped = merged_data.groupby('State', group_keys=False).apply(assign_ranks)
-                state_summary = state_grouped.groupby(['State', 'Rank']).agg(
-                    Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().tolist())))
-                ).reset_index()
-                st.dataframe(state_summary)
-
-            # Tab 3: Program Opted
-            with tab3:
-                st.write("### Program Opted")
-                program_grouped = merged_data.groupby('Program_uploaded', group_keys=False).apply(assign_ranks)
-                program_summary = program_grouped.groupby(['Program_uploaded', 'Rank']).agg(
-                    Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().tolist())))
-                ).reset_index()
-                st.dataframe(program_summary)
-
-            # Tab 4: Type Opted
-            with tab4:
-                st.write("### Type Opted")
-                type_summary = merged_data.groupby('TYPE_uploaded').agg(
-                    Options_Filled=('MAIN CODE', 'count'),
-                    Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().tolist())))
-                ).reset_index()
-                st.dataframe(type_summary)
+            # Display combined summary
+            st.write("### Combined State and Program Opted Summary")
+            st.dataframe(summary_table)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
