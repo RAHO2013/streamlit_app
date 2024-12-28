@@ -3,20 +3,26 @@ import streamlit as st
 # Sidebar Navigation
 def navigate():
     st.sidebar.title("Navigation")
+
+    # Home Page as a separate section
+    if st.sidebar.button("🏠 Home"):
+        st.session_state.page = "home"
+
+    # Data Management Expander
     with st.sidebar.expander("📊 Data Management", expanded=True):
-        if st.button("Home"):
-            st.session_state.page = "home"
         if st.button("Master Data"):
             st.session_state.page = "master_data"
         if st.button("Order Creation"):
             st.session_state.page = "order_creation"
 
+    # Rankings and Comparison Expander
     with st.sidebar.expander("⚙️ Rankings and Comparison", expanded=False):
         if st.button("Order Creation with Excel"):
             st.session_state.page = "excel_ranking"
         if st.button("Order Comparison"):
             st.session_state.page = "order_comparison"
 
+    # Fee Management Expander
     with st.sidebar.expander("💸 Fee Management", expanded=False):
         if st.button("Fee Checking"):
             st.session_state.page = "fee_checking"
