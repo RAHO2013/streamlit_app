@@ -6,7 +6,7 @@ def navigate():
 
     # Home Page as a separate section
     with st.sidebar.expander("🏠 Home", expanded=True):
-        if st.sidebar.button("Home"):
+        if st.button("Home"):
             st.session_state.page = "home"
 
     # Data Management Expander
