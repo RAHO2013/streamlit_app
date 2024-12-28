@@ -56,13 +56,14 @@ def display_comparison():
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
-            # Tabs for validation and merged data display
-            tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            # Tabs for validation and dashboard
+            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
                 "Merged Data",
                 "Unmatched Rows",
                 "Duplicates",
                 "Missing Values",
-                "Student Order Validation"
+                "Student Order Validation",
+                "Dashboard"
             ])
 
             # Tab 1: Display merged data
@@ -114,6 +115,25 @@ def display_comparison():
                     st.dataframe(invalid_student_order)
                 else:
                     st.success("'Student Order' values are valid and properly formatted.")
+
+            # Tab 6: Dashboard for State, Program, and Type Opted
+            with tab6:
+                st.write("### Dashboard")
+
+                # State Opted
+                state_count = merged_data['State_uploaded'].value_counts()
+                st.write("#### State Opted")
+                st.bar_chart(state_count)
+
+                # Program Opted
+                program_count = merged_data['Program_uploaded'].value_counts()
+                st.write("#### Program Opted")
+                st.bar_chart(program_count)
+
+                # Type Opted
+                type_count = merged_data['TYPE_uploaded'].value_counts()
+                st.write("#### Type Opted")
+                st.bar_chart(type_count)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
