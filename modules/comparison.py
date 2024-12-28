@@ -41,7 +41,8 @@ def display_comparison():
             # Rename only the first 7 columns to match expected structure
             comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
-            # Ensure Student Order is numeric and starts at 1
+            # Clean and process Student Order to handle unexpected formats
+            comparison_sheet['Student Order'] = comparison_sheet['Student Order'].str.replace(',', '').astype(float, errors='ignore')
             comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
             comparison_sheet.sort_values(by='Student Order', inplace=True)
 
@@ -61,21 +62,6 @@ def display_comparison():
                 Student_Orders=('Student Order', lambda x: format_ranges(sorted(x.dropna().astype(int).tolist())))
             ).reset_index()
 
-            # Add a helper column for group rankings
-            def assign_group_ranks(data):
-                data = data.sort_values('Student_Orders', key=lambda x: x.str.split('-').str[0].astype(int))
-                data['Helper_Group'] = (data['Student_Orders']
-                                        .str.split('-')
-                                        .str[0]
-                                        .astype(int)
-                                        .diff()
-                                        .fillna(0)
-                                        .gt(1)
-                                        .cumsum() + 1)
-                return data
-
-            summary_table = assign_group_ranks(summary_table)
-
             # Tabs for displaying data
             tab1, tab2, tab3 = st.tabs([
                 "Merged Data",
@@ -90,7 +76,7 @@ def display_comparison():
 
             # Tab 2: Summary Table
             with tab2:
-                st.write("### State, Program, Type with Student Orders and Helper Groups")
+                st.write("### State, Program, Type with Student Orders")
                 st.dataframe(summary_table)
 
             # Tab 3: Validation
