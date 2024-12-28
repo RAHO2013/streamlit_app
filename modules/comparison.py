@@ -43,11 +43,13 @@ def display_comparison():
 
             # Ensure Student Order is numeric and starts at 1
             comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
-            comparison_sheet['Sort Helper'] = comparison_sheet['Student Order'].rank(method='dense').astype(int)
-            comparison_sheet.sort_values(by=['Sort Helper', 'Student Order'], inplace=True)
+            comparison_sheet.sort_values(by='Student Order', inplace=True)
 
             if comparison_sheet['Student Order'].min() != 1:
                 st.warning("'Student Order' should start from 1. Please check the uploaded file.")
+
+            # Assign grouping based on gaps in Student Order
+            comparison_sheet['Helper_Order'] = (comparison_sheet['Student Order'].diff() > 1).cumsum() + 1
 
             # Create MAIN CODE in the comparison file
             comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip()
@@ -123,7 +125,7 @@ def display_comparison():
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
                         'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Helper_Order': ', '.join(map(str, x['Sort Helper'].dropna().astype(int).tolist()))
+                        'Helper_Group': ', '.join(map(str, sorted(x['Helper_Order'].dropna().unique())))
                     })
                 ).reset_index()
                 state_opted['Student_Orders'] = state_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -136,7 +138,7 @@ def display_comparison():
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
                         'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Helper_Order': ', '.join(map(str, x['Sort Helper'].dropna().astype(int).tolist()))
+                        'Helper_Group': ', '.join(map(str, sorted(x['Helper_Order'].dropna().unique())))
                     })
                 ).reset_index()
                 program_opted['Student_Orders'] = program_opted['Student_Orders'].apply(lambda x: ', '.join(x))
@@ -149,7 +151,7 @@ def display_comparison():
                     lambda x: pd.Series({
                         'Options_Filled': x['MAIN CODE'].count(),
                         'Student_Orders': format_ranges(sorted(x['Student Order'].dropna().astype(int).tolist())),
-                        'Helper_Order': ', '.join(map(str, x['Sort Helper'].dropna().astype(int).tolist()))
+                        'Helper_Group': ', '.join(map(str, sorted(x['Helper_Order'].dropna().unique())))
                     })
                 ).reset_index()
                 type_opted['Student_Orders'] = type_opted['Student_Orders'].apply(lambda x: ', '.join(x))
