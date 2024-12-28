@@ -43,6 +43,8 @@ def display_comparison():
 
             # Ensure Student Order is numeric and starts at 1
             comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
+            comparison_sheet.sort_values(by='Student Order', inplace=True)
+
             if comparison_sheet['Student Order'].min() != 1:
                 st.warning("'Student Order' should start from 1. Please check the uploaded file.")
 
