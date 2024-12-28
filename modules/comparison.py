@@ -121,7 +121,7 @@ def display_comparison():
                 st.write("### Dashboard")
 
                 # State Opted (From Master Sheet)
-                state_count = merged_data['State_master'].value_counts()
+                state_count = merged_data['State'].value_counts()
                 st.write("#### State Opted")
                 st.bar_chart(state_count)
 
