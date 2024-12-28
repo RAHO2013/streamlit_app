@@ -21,9 +21,21 @@ def display_comparison():
         try:
             comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1')
 
+            # Allow the user to rename columns in the uploaded file
+            st.write("### Rename Columns in Uploaded File")
+            current_columns = comparison_sheet.columns.tolist()
+            renamed_columns = {}
+
+            for column in current_columns:
+                new_name = st.text_input(f"Rename column '{column}' to:", column)
+                renamed_columns[column] = new_name
+
+            # Apply renamed columns
+            comparison_sheet.rename(columns=renamed_columns, inplace=True)
+
             # Ensure necessary columns exist
             if not {'Institute Name', 'Program Name'}.issubset(comparison_sheet.columns):
-                st.error("Comparison file must contain 'Institute Name' and 'Program Name' columns.")
+                st.error("Comparison file must contain 'Institute Name' and 'Program Name' columns after renaming.")
                 return
 
             # Create MAIN CODE column in comparison file
@@ -52,4 +64,3 @@ def display_comparison():
             st.error(f"An error occurred while processing the uploaded file: {e}")
     else:
         st.info("Please upload an Excel file for comparison.")
-
