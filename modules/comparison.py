@@ -70,11 +70,17 @@ def display_comparison():
             # Sort the summary table by numeric columns for correct ascending order
             summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
 
+            # Create unique tables for State, Program, and Type
+            unique_state_table = merged_data[['State']].drop_duplicates().reset_index(drop=True)
+            unique_program_table = merged_data[['Program_uploaded']].drop_duplicates().reset_index(drop=True)
+            unique_type_table = merged_data[['TYPE_uploaded']].drop_duplicates().reset_index(drop=True)
+
             # Tabs for displaying data
-            tab1, tab2, tab3 = st.tabs([
+            tab1, tab2, tab3, tab4 = st.tabs([
                 "Merged Data",
                 "State, Program, Type with Student Orders",
-                "Validation"
+                "Validation",
+                "Unique Tables"
             ])
 
             # Tab 1: Merged Data
@@ -124,6 +130,20 @@ def display_comparison():
                         st.dataframe(missing_values)
                     else:
                         st.success("No missing values found in the merged data!")
+
+            # Tab 4: Unique Tables
+            with tab4:
+                with st.expander("Unique States"):
+                    st.write("### Unique States")
+                    st.dataframe(unique_state_table)
+
+                with st.expander("Unique Programs"):
+                    st.write("### Unique Programs")
+                    st.dataframe(unique_program_table)
+
+                with st.expander("Unique Types"):
+                    st.write("### Unique Types")
+                    st.dataframe(unique_type_table)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
