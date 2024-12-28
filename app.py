@@ -15,14 +15,14 @@ def navigate():
 
 
     # Rankings
-    with st.sidebar.expander("⚙️ Rankings and Comparison", expanded=False):
+    with st.sidebar.expander("🏆 Rankings ", expanded=False):
         if st.button("Order Creation with Excel"):
             st.session_state.page = "excel_ranking"
         if st.button("Order Creation"):
             st.session_state.page = "order_creation"
             
     # Comparison Expander
-    with st.sidebar.expander("⚙️ Rankings and Comparison", expanded=False):
+    with st.sidebar.expander("⚙️ Comparison", expanded=False):
         if st.button("Order Comparison"):
             st.session_state.page = "order_comparison"
 
