@@ -21,44 +21,37 @@ def display_comparison():
         try:
             comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1')
 
-            # Allow the user to rename columns in the uploaded file
-            st.write("### Rename Columns in Uploaded File")
-            current_columns = comparison_sheet.columns.tolist()
-            renamed_columns = {}
+            # Rename columns in the uploaded file
+            st.write("### Renaming Columns in Uploaded File")
+            expected_columns = [
+                "MCC College Code",
+                "College Name",
+                "COURSE CODE",
+                "Program",
+                "Quota",
+                "TYPE",
+                "Student Order"
+            ]
 
-            for column in current_columns:
-                new_name = st.text_input(f"Rename column '{column}' to:", column)
-                renamed_columns[column] = new_name
-
-            # Apply renamed columns
-            comparison_sheet.rename(columns=renamed_columns, inplace=True)
-
-            # Ensure necessary columns exist
-            if not {'Institute Name', 'Program Name'}.issubset(comparison_sheet.columns):
-                st.error("Comparison file must contain 'Institute Name' and 'Program Name' columns after renaming.")
+            if len(comparison_sheet.columns) >= len(expected_columns):
+                comparison_sheet.columns = expected_columns[:len(comparison_sheet.columns)]
+            else:
+                st.error("Uploaded file must have at least 7 columns.")
                 return
 
-            # Create MAIN CODE column in comparison file
-            comparison_sheet['MAIN CODE'] = comparison_sheet['Institute Name'].astype(str) + "_" + comparison_sheet['Program Name'].astype(str)
+            # Create MAIN CODE in the comparison file
+            comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].astype(str) + "_" + comparison_sheet['COURSE CODE'].astype(str)
 
-            # Create MAIN CODE column in master sheet
+            # Create MAIN CODE in the master sheet
             if {'MCC College Code', 'COURSE CODE'}.issubset(master_sheet.columns):
                 master_sheet['MAIN CODE'] = master_sheet['MCC College Code'].astype(str) + "_" + master_sheet['COURSE CODE'].astype(str)
 
-            # Find mismatches
-            missing_in_comparison = set(master_sheet['MAIN CODE']) - set(comparison_sheet['MAIN CODE'])
-            missing_in_master = set(comparison_sheet['MAIN CODE']) - set(master_sheet['MAIN CODE'])
+            # Merge data based on MAIN CODE
+            merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
-            # Display results
-            st.write("### MAIN CODE Missing in Comparison File")
-            missing_comparison_df = pd.DataFrame(list(missing_in_comparison), columns=["MAIN CODE"])
-            missing_comparison_df.index = range(1, len(missing_comparison_df) + 1)
-            st.dataframe(missing_comparison_df)
-
-            st.write("### MAIN CODE Missing in Master File")
-            missing_master_df = pd.DataFrame(list(missing_in_master), columns=["MAIN CODE"])
-            missing_master_df.index = range(1, len(missing_master_df) + 1)
-            st.dataframe(missing_master_df)
+            # Display merged data
+            st.write("### Merged Table Based on MAIN CODE")
+            st.dataframe(merged_data)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
