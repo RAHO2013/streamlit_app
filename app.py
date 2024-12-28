@@ -12,13 +12,17 @@ def navigate():
     with st.sidebar.expander("📊 Data Management", expanded=True):
         if st.button("Master Data"):
             st.session_state.page = "master_data"
-        if st.button("Order Creation"):
-            st.session_state.page = "order_creation"
 
-    # Rankings and Comparison Expander
+
+    # Rankings
     with st.sidebar.expander("⚙️ Rankings and Comparison", expanded=False):
         if st.button("Order Creation with Excel"):
             st.session_state.page = "excel_ranking"
+        if st.button("Order Creation"):
+            st.session_state.page = "order_creation"
+            
+    # Comparison Expander
+    with st.sidebar.expander("⚙️ Rankings and Comparison", expanded=False):
         if st.button("Order Comparison"):
             st.session_state.page = "order_comparison"
 
