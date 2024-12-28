@@ -1,20 +1,17 @@
 import streamlit as st
+import pandas as pd
 from utils.utils import load_master_sheet
-
 
 st.title("Order Creation Dashboard")
 
 try:
     master_sheet = load_master_sheet()
-    
-    # Ensure necessary columns exist
+
     if {'State', 'Program', 'College Name', 'TYPE'}.issubset(master_sheet.columns):
         unique_states = master_sheet['State'].unique()
 
-        # Tabs for Ranking and Orders
         tab1, tab2, tab3 = st.tabs(["Ranking States", "Ranking Programs by Type", "Generate Order Table"])
 
-        # Ranking States
         with tab1:
             st.subheader("Rank States")
             state_ranking = {}
@@ -26,7 +23,6 @@ try:
             st.write("State Rankings:")
             st.write(state_ranking)
 
-        # Ranking Programs by TYPE
         with tab2:
             st.subheader("Rank Programs by Type")
             all_programs = master_sheet[['TYPE', 'Program']].drop_duplicates()
@@ -40,7 +36,6 @@ try:
             st.write("Program Rankings:")
             st.write(program_ranking)
 
-        # Generate Ordered Table
         with tab3:
             st.subheader("Generate Order Table")
             master_sheet['State Rank'] = master_sheet['State'].map(state_ranking).fillna(0)
