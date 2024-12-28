@@ -12,13 +12,15 @@ def display_comparison():
         st.error(f"Master file '{MASTER_FILE}' is missing in the 'data/' folder!")
         return
 
-    master_sheet = pd.read_excel(MASTER_FILE, sheet_name='Sheet1')
+    # Load the master sheet
+    master_sheet = pd.read_excel(MASTER_FILE, sheet_name='Sheet1', dtype=str)
 
     # File upload section
     uploaded_file = st.file_uploader("Upload Comparison File (Excel)", type=["xlsx"])
 
     if uploaded_file:
         try:
+            # Load the uploaded comparison sheet
             comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1', dtype=str)
 
             # Rename columns in the uploaded file
@@ -41,12 +43,18 @@ def display_comparison():
             # Rename only the first 7 columns to match expected structure
             comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
-            # Create MAIN CODE in the comparison file
-            comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip()
+            # Strip unnecessary whitespaces and remove '.0' suffix in numeric-like columns
+            for col in ["MCC College Code", "COURSE CODE"]:
+                comparison_sheet[col] = comparison_sheet[col].str.split('.').str[0].str.strip()
 
-            # Create MAIN CODE in the master sheet
+            # Create MAIN CODE in the comparison file
+            comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'] + "_" + comparison_sheet['COURSE CODE']
+
+            # Ensure MAIN CODE in the master sheet is formatted consistently
             if {'MCC College Code', 'COURSE CODE'}.issubset(master_sheet.columns):
-                master_sheet['MAIN CODE'] = master_sheet['MCC College Code'].astype(str).str.strip() + "_" + master_sheet['COURSE CODE'].astype(str).str.strip()
+                for col in ["MCC College Code", "COURSE CODE"]:
+                    master_sheet[col] = master_sheet[col].str.split('.').str[0].str.strip()
+                master_sheet['MAIN CODE'] = master_sheet['MCC College Code'] + "_" + master_sheet['COURSE CODE']
 
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
