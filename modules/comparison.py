@@ -66,8 +66,8 @@ def display_comparison():
             summary_table.insert(0, 'Student_Order_Ranges', summary_table.pop('Student_Order_Ranges'))
 
             # Split Student Order ranges into separate columns
-            summary_table['Student_Order_From'] = summary_table['Student_Order_Ranges'].str.extract(r'^(\d+)', expand=False).astype(float)
-            summary_table['Student_Order_To'] = summary_table['Student_Order_Ranges'].str.extract(r'(\d+)$', expand=False).astype(float)
+            summary_table['Student_Order_From'] = summary_table['Student_Order_Ranges'].str.extract(r'^([\d]+)', expand=False).astype(float)
+            summary_table['Student_Order_To'] = summary_table['Student_Order_Ranges'].str.extract(r'([\d]+)$', expand=False).astype(float)
 
             # If there is no range, fill 'To' column with 'From' value
             summary_table['Student_Order_To'].fillna(summary_table['Student_Order_From'], inplace=True)
@@ -75,10 +75,18 @@ def display_comparison():
             # Sort the summary table by numeric columns for correct ascending order
             summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
 
-            # Create unique tables for State, Program, and Type
-            unique_state_table = merged_data[['State']].drop_duplicates().reset_index(drop=True)
-            unique_program_table = merged_data[['Program_uploaded']].drop_duplicates().reset_index(drop=True)
-            unique_type_table = merged_data[['TYPE_uploaded']].drop_duplicates().reset_index(drop=True)
+            # Create unique tables for State, Program, and Type with Options_Filled column
+            unique_state_table = merged_data.groupby('State').agg(
+                Options_Filled=('MAIN CODE', 'count')
+            ).reset_index()
+
+            unique_program_table = merged_data.groupby('Program_uploaded').agg(
+                Options_Filled=('MAIN CODE', 'count')
+            ).reset_index()
+
+            unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
+                Options_Filled=('MAIN CODE', 'count')
+            ).reset_index()
 
             # Tabs for displaying data
             tab1, tab2, tab3, tab4 = st.tabs([
