@@ -62,12 +62,13 @@ def display_comparison():
                 Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
             ).reset_index()
 
-            # Split Student Order ranges into separate columns and ensure they are numeric
+            # Split Student Order ranges into separate columns
             summary_table[['Student_Order_From', 'Student_Order_To']] = summary_table['Student_Order_Ranges'].str.extract(r'(\d+)-(\d+)', expand=True)
             summary_table['Student_Order_From'] = pd.to_numeric(summary_table['Student_Order_From'], errors='coerce')
             summary_table['Student_Order_To'] = pd.to_numeric(summary_table['Student_Order_To'], errors='coerce')
 
-            # Fill missing 'To' values with the same as 'From' for better sorting and analysis
+            # If there is no range, fill 'To' column with 'From' value
+            summary_table['Student_Order_From'].fillna(summary_table['Student_Order_Ranges'].str.extract(r'(\d+)', expand=False).astype(float), inplace=True)
             summary_table['Student_Order_To'].fillna(summary_table['Student_Order_From'], inplace=True)
 
             # Sort the summary table by numeric columns for correct ascending order
