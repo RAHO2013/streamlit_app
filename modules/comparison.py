@@ -90,7 +90,7 @@ def display_comparison():
 
             # Extract Fee and Cutoff data
             fee_cutoff_table = merged_data[[
-                'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'COURSE TYPE'
+                'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'COURSE TYPE'
             ]].dropna(how='all').reset_index(drop=True)
 
             # Tabs for displaying data
@@ -167,7 +167,14 @@ def display_comparison():
             # Tab 5: Fee and Cutoff Data
             with tab5:
                 st.write("### Fee and Cutoff Data")
-                st.dataframe(fee_cutoff_table)
+
+                # Dropdown to filter Fee and Cutoff data
+                course_type_filter = st.selectbox(
+                    "Select Course Type:", options=fee_cutoff_table['COURSE TYPE'].unique(), index=0
+                )
+
+                filtered_fee_cutoff_table = fee_cutoff_table[fee_cutoff_table['COURSE TYPE'] == course_type_filter]
+                st.dataframe(filtered_fee_cutoff_table)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
