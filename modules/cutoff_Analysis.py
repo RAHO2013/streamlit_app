@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-def display_cutoff_analysis():
+def display_Cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
 
     # Load the AIQR2 Excel file
@@ -105,4 +105,4 @@ def display_cutoff_analysis():
         st.bar_chart(remarks_counts)
 
 # Call the function to display the dashboard
-display_cutoff_analysis()
+display_Cutoff_Analysis()
