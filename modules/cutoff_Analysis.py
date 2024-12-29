@@ -23,6 +23,9 @@ def display_cutoff_Analysis():
     # Clean and prepare data
     aiqr2_data.fillna("-", inplace=True)
 
+    # Ensure NEET AIR is numeric for proper sorting and calculations
+    aiqr2_data['NEET AIR'] = pd.to_numeric(aiqr2_data['NEET AIR'], errors='coerce')
+
     # Tabs for analysis
     tab1, tab2, tab3 = st.tabs([
         "AIR Allotment Analysis",
@@ -55,16 +58,27 @@ def display_cutoff_Analysis():
     with tab2:
         st.write("### Course and Category Analysis")
 
+        # Dropdown filters
+        quota_filter = st.selectbox("Select Quota for Filtering:", aiqr2_data['R2 Final Allotted Quota'].unique())
+        filtered_data = aiqr2_data[aiqr2_data['R2 Final Allotted Quota'] == quota_filter]
+
+        category_order = ["Open", "EWS", "OBC", "SC", "ST"]
+        remaining_categories = [cat for cat in filtered_data['R2 Final Alloted Category'].unique() if cat not in category_order]
+        category_order += remaining_categories
+
         # Create a pivot table for max NEET AIR by R2 Final Course and R2 Final Alloted Category
-        pivot_table = aiqr2_data.pivot_table(
+        pivot_table = filtered_data.pivot_table(
             values='NEET AIR', 
             index='R2 Final Course', 
             columns='R2 Final Alloted Category', 
             aggfunc='max', 
-            fill_value='-'
+            fill_value=0
         )
 
-        st.write("### Pivot Table: Maximum NEET AIR by Course and Category")
+        # Reorder columns to match the category order
+        pivot_table = pivot_table[[col for col in category_order if col in pivot_table.columns]]
+
+        st.write(f"### Pivot Table: Maximum NEET AIR by Course and Category (Quota: {quota_filter})")
         st.dataframe(pivot_table)
 
     # Tab 3: Remarks Analysis
