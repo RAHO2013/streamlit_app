@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-def display_cutoff_Analysis():
+def display_Cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
 
     # Load the AIQR2 Excel file
@@ -24,12 +24,9 @@ def display_cutoff_Analysis():
     aiqr2_data.fillna("-", inplace=True)
 
     # Tabs for analysis
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "AIR Allotment Analysis",
-        "Quota-wise Analysis",
-        "Institute Preferences",
-        "Course-wise Analysis",
-        "Category Allotments",
+        "Course and Category Analysis",
         "Remarks Analysis"
     ])
 
@@ -54,48 +51,20 @@ def display_cutoff_Analysis():
         ax.set_ylabel("Count")
         st.pyplot(fig)
 
-    # Tab 2: Quota-wise Analysis
+    # Tab 2: Course and Category Analysis
     with tab2:
-        st.write("### Quota-wise Analysis")
+        st.write("### Course and Category Analysis")
 
-        quota_selection = st.selectbox("Select Round for Quota Analysis:", ["R1 Allotted Quota", "R2 Final Allotted Quota"])
+        # Group by R2 Final Course and Category with max NEET AIR
+        grouped_data = aiqr2_data.groupby(['R2 Final Course', 'R2 Final Alloted Category'], as_index=False).agg(
+            max_neet_air=('NEET AIR', 'max')
+        )
 
-        quota_counts = aiqr2_data[quota_selection].value_counts()
-        st.write(f"### {quota_selection} Distribution")
-        st.bar_chart(quota_counts)
+        st.write("### Maximum NEET AIR by Course and Category")
+        st.dataframe(grouped_data)
 
-    # Tab 3: Institute Preferences
+    # Tab 3: Remarks Analysis
     with tab3:
-        st.write("### Institute Preferences")
-
-        round_selection = st.selectbox("Select Round:", ["R1 Allotted Institute", "R2 Final Allotted Institute"])
-        institute_counts = aiqr2_data[round_selection].value_counts()
-
-        st.write(f"### {round_selection} Preferences")
-        st.bar_chart(institute_counts)
-
-    # Tab 4: Course-wise Analysis
-    with tab4:
-        st.write("### Course-wise Analysis")
-
-        round_course_selection = st.selectbox("Select Round for Course Analysis:", ["R1 Course", "R2 Final Course"])
-        course_counts = aiqr2_data[round_course_selection].value_counts()
-
-        st.write(f"### {round_course_selection} Popularity")
-        st.bar_chart(course_counts)
-
-    # Tab 5: Category Allotments
-    with tab5:
-        st.write("### Category-based Allotments")
-
-        category_selection = st.selectbox("Select Category Type:", ["R2 Final Alloted Category", "R2 candidate Category"])
-        category_counts = aiqr2_data[category_selection].value_counts()
-
-        st.write(f"### {category_selection} Distribution")
-        st.bar_chart(category_counts)
-
-    # Tab 6: Remarks Analysis
-    with tab6:
         st.write("### Remarks Analysis")
 
         remarks_selection = st.selectbox("Select Remarks Type:", ["R1 Remarks", "R2 Final Remarks"])
@@ -105,4 +74,4 @@ def display_cutoff_Analysis():
         st.bar_chart(remarks_counts)
 
 # Call the function to display the dashboard
-display_cutoff_Analysis()
+display_Cutoff_Analysis()
