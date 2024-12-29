@@ -55,13 +55,17 @@ def display_cutoff_Analysis():
     with tab2:
         st.write("### Course and Category Analysis")
 
-        # Group by R2 Final Course and Category with max NEET AIR
-        grouped_data = aiqr2_data.groupby(['R2 Final Course', 'R2 Final Alloted Category'], as_index=False).agg(
-            max_neet_air=('NEET AIR', 'max')
+        # Create a pivot table for max NEET AIR by R2 Final Course and R2 Final Alloted Category
+        pivot_table = aiqr2_data.pivot_table(
+            values='NEET AIR', 
+            index='R2 Final Course', 
+            columns='R2 Final Alloted Category', 
+            aggfunc='max', 
+            fill_value='-'
         )
 
-        st.write("### Maximum NEET AIR by Course and Category")
-        st.dataframe(grouped_data)
+        st.write("### Pivot Table: Maximum NEET AIR by Course and Category")
+        st.dataframe(pivot_table)
 
     # Tab 3: Remarks Analysis
     with tab3:
