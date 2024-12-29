@@ -45,7 +45,11 @@ def display_cutoff_Analysis():
 
         filtered_air_data = aiqr2_data[(aiqr2_data['NEET AIR'] >= air_range[0]) & (aiqr2_data['NEET AIR'] <= air_range[1])]
         st.write(f"### AIR Range: {air_range[0]} - {air_range[1]}")
-        st.dataframe(filtered_air_data.style.format({"NEET AIR": "{:.0f}"}))
+
+        # Format NEET AIR column for display without commas
+        formatted_data = filtered_air_data.copy()
+        formatted_data['NEET AIR'] = formatted_data['NEET AIR'].astype(str)
+        st.dataframe(formatted_data)
 
         # Graph
         fig, ax = plt.subplots()
@@ -79,8 +83,11 @@ def display_cutoff_Analysis():
         # Reorder columns to match the category order
         pivot_table = pivot_table[[col for col in category_order if col in pivot_table.columns]]
 
+        # Convert NEET AIR values to integers for display
+        pivot_table = pivot_table.applymap(lambda x: int(x) if pd.notnull(x) and x != 0 else x)
+
         st.write(f"### Pivot Table: Maximum NEET AIR by Course and Category (Quota: {quota_filter})")
-        st.dataframe(pivot_table.style.format({col: "{:.0f}" for col in pivot_table.columns}))
+        st.dataframe(pivot_table)
 
     # Tab 3: Remarks Analysis
     with tab3:
