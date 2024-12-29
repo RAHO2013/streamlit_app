@@ -169,11 +169,20 @@ def display_comparison():
                 st.write("### Fee and Cutoff Data")
 
                 # Dropdown to filter Fee and Cutoff data
-                course_type_filter = st.selectbox(
-                    "Select Course Type:", options=fee_cutoff_table['COURSE TYPE'].unique(), index=0
+                selected_column = st.selectbox(
+                    "Select Fee or Cutoff to Display:",
+                    options=['Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF'],
+                    index=0
                 )
 
-                filtered_fee_cutoff_table = fee_cutoff_table[fee_cutoff_table['COURSE TYPE'] == course_type_filter]
+                filtered_fee_cutoff_table = fee_cutoff_table[[
+                    'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Fees', selected_column
+                ]].rename(columns={
+                    'College Name_master': 'College Name',
+                    'Program_uploaded': 'Program',
+                    'TYPE_uploaded': 'Type'
+                })
+
                 st.dataframe(filtered_fee_cutoff_table)
 
         except Exception as e:
