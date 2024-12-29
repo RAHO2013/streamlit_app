@@ -90,7 +90,7 @@ def display_comparison():
 
             # Extract Fee and Cutoff data
             fee_cutoff_table = merged_data[[
-                'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'COURSE TYPE'
+                'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'SERVICE YEARS', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'COURSE TYPE'
             ]].dropna(how='all').reset_index(drop=True)
 
             # Tabs for displaying data
