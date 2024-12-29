@@ -105,4 +105,4 @@ def display_cutoff_Analysis():
         st.bar_chart(remarks_counts)
 
 # Call the function to display the dashboard
-display_Cutoff_Analysis()
+display_cutoff_Analysis()
