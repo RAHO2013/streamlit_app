@@ -67,6 +67,9 @@ def display_comparison():
             summary_table['Student_Order_From'] = pd.to_numeric(summary_table['Student_Order_From'], errors='coerce')
             summary_table['Student_Order_To'] = pd.to_numeric(summary_table['Student_Order_To'], errors='coerce')
 
+            # Fill missing 'To' values with the same as 'From' for better sorting and analysis
+            summary_table['Student_Order_To'].fillna(summary_table['Student_Order_From'], inplace=True)
+
             # Sort the summary table by numeric columns for correct ascending order
             summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
 
