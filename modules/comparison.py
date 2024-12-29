@@ -77,15 +77,15 @@ def display_comparison():
 
             # Create unique tables for State, Program, and Type with Options_Filled column
             unique_state_table = merged_data.groupby('State').agg(
-                Options_Filled=('MAIN CODE', 'count')
+                Options_Filled=('State', 'count')
             ).reset_index()
 
             unique_program_table = merged_data.groupby('Program_uploaded').agg(
-                Options_Filled=('MAIN CODE', 'count')
+                Options_Filled=('Program_uploaded', 'count')
             ).reset_index()
 
             unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
-                Options_Filled=('MAIN CODE', 'count')
+                Options_Filled=('TYPE_uploaded', 'count')
             ).reset_index()
 
             # Tabs for displaying data
