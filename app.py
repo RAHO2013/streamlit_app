@@ -28,10 +28,10 @@ def navigate():
         if st.button("Order Comparison"):
             st.session_state.page = "order_comparison"
 
-    # Fee Management Expander
-    with st.sidebar.expander("💸 Fee Management", expanded=False):
-        if st.button("Fee Checking"):
-            st.session_state.page = "fee_checking"
+    # Cutoff Analysis
+    with st.sidebar.expander("💸 Cutoff Analysis", expanded=False):
+        if st.button("Cutoff Analysis"):
+            st.session_state.page = "Cutoff_Analysis"
 
 # Run the selected page
 def run_page():
@@ -53,9 +53,9 @@ def run_page():
     elif st.session_state.page == "order_comparison":
         from modules.comparison import display_comparison
         display_comparison()
-    elif st.session_state.page == "fee_checking":
-        from modules.fee_checking import display_fee_checking
-        display_fee_checking()
+    elif st.session_state.page == "Cutoff_Analysis":
+        from modules.Cutoff_Analysis import display_Cutoff_Analysis
+        display_Cutoff_Analysis()
 
 # Main app logic
 def main():
