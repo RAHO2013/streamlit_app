@@ -24,7 +24,7 @@ def display_cutoff_Analysis():
     aiqr2_data.fillna("-", inplace=True)
 
     # Ensure NEET AIR is numeric for proper sorting and calculations
-    aiqr2_data['NEET AIR'] = pd.to_numeric(aiqr2_data['NEET AIR'], errors='coerce')
+    aiqr2_data['NEET AIR'] = pd.to_numeric(aiqr2_data['NEET AIR'].str.replace(',', ''), errors='coerce')
 
     # Tabs for analysis
     tab1, tab2, tab3 = st.tabs([
