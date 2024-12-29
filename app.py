@@ -54,7 +54,7 @@ def run_page():
         from modules.comparison import display_comparison
         display_comparison()
     elif st.session_state.page == "Cutoff_Analysis":
-        from modules.Cutoff_Analysis import display_Cutoff_Analysis
+        from modules.cutoff_Analysis import display_Cutoff_Analysis
         display_Cutoff_Analysis()
 
 # Main app logic
