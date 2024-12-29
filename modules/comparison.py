@@ -171,7 +171,7 @@ def display_comparison():
                 # Dropdown to filter Fee and Cutoff data
                 selected_column = st.selectbox(
                     "Select Fee or Cutoff to Display:",
-                    options=['Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF'],
+                    options=['OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF'],
                     index=0
                 )
 
