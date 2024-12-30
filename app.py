@@ -30,7 +30,7 @@ def navigate():
 
     # Cutoff Analysis
     with st.sidebar.expander("💸 Cutoff Analysis", expanded=False):
-        if st.button("Cutoff Analysis"):
+        if st.button("Aiq Round 2"):
             st.session_state.page = "Cutoff_Analysis"
 
 # Run the selected page
