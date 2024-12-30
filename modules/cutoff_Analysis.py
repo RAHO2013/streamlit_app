@@ -113,6 +113,7 @@ def display_cutoff_Analysis():
 
         # Horizontal positioning for dynamic filters with interdependencies
         col1, col2, col3 = st.columns(3)
+        col4, col5, col6 = st.columns(3)
 
         with col1:
             compare_r1 = st.multiselect(
@@ -138,8 +139,6 @@ def display_cutoff_Analysis():
                 default=None
             )
             filtered_data = filtered_data[filtered_data['R1 Allotted Quota'].isin(compare_r1_quota)] if compare_r1_quota else filtered_data
-
-        col4, col5, col6 = st.columns(3)
 
         with col4:
             compare_r1_course = st.multiselect(
@@ -185,9 +184,9 @@ def display_cutoff_Analysis():
 
         # Scatter Plot: Filtered Data
         st.write("### Filtered Comparison Results Scatter Plot")
-        fig, ax = plt.subplots(figsize=(15, 10))
+        fig, ax = plt.subplots(figsize=(18, 12))
         sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
-        ax.set_title('Filtered Comparison: NEET AIR vs Course Allotments', fontsize=16, loc='left')
+        ax.set_title('Filtered Comparison:\nNEET AIR vs Course Allotments', fontsize=16, loc='left')
         ax.set_title('Dynamic Analysis', fontsize=12, loc='right')
         ax.set_xlabel('NEET AIR', fontsize=14, labelpad=20)
         ax.set_ylabel('Course', fontsize=14, labelpad=20)
