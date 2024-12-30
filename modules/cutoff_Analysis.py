@@ -146,12 +146,22 @@ def display_cutoff_Analysis():
     st.sidebar.write("### Comparison Filters")
     compare_r1 = st.sidebar.multiselect("Select R1 Remarks to Compare:", aiqr2_data['R1 Remarks'].unique())
     compare_r2 = st.sidebar.multiselect("Select R2 Remarks to Compare:", aiqr2_data['R2 Final Remarks'].unique())
+    compare_r1_quota = st.sidebar.multiselect("Select R1 Allotted Quota:", aiqr2_data['R1 Allotted Quota'].unique())
+    compare_r1_course = st.sidebar.multiselect("Select R1 Course:", aiqr2_data['R1 Course'].unique())
+    compare_r2_quota = st.sidebar.multiselect("Select R2 Final Allotted Quota:", aiqr2_data['R2 Final Allotted Quota'].unique())
+    compare_r2_course = st.sidebar.multiselect("Select R2 Final Course:", aiqr2_data['R2 Final Course'].unique())
+    compare_r2_category = st.sidebar.multiselect("Select R2 Final Allotted Category:", aiqr2_data['R2 Final Allotted Category'].unique())
 
-    if compare_r1 or compare_r2:
+    if any([compare_r1, compare_r2, compare_r1_quota, compare_r1_course, compare_r2_quota, compare_r2_course, compare_r2_category]):
         st.write("### Comparison Analysis")
         filtered_comparison_data = aiqr2_data[
             (aiqr2_data['R1 Remarks'].isin(compare_r1) if compare_r1 else True) &
-            (aiqr2_data['R2 Final Remarks'].isin(compare_r2) if compare_r2 else True)
+            (aiqr2_data['R2 Final Remarks'].isin(compare_r2) if compare_r2 else True) &
+            (aiqr2_data['R1 Allotted Quota'].isin(compare_r1_quota) if compare_r1_quota else True) &
+            (aiqr2_data['R1 Course'].isin(compare_r1_course) if compare_r1_course else True) &
+            (aiqr2_data['R2 Final Allotted Quota'].isin(compare_r2_quota) if compare_r2_quota else True) &
+            (aiqr2_data['R2 Final Course'].isin(compare_r2_course) if compare_r2_course else True) &
+            (aiqr2_data['R2 Final Allotted Category'].isin(compare_r2_category) if compare_r2_category else True)
         ]
         st.dataframe(filtered_comparison_data)
 
