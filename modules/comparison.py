@@ -149,7 +149,7 @@ def display_unique_tables(merged_data):
         st.dataframe(unique_state_table)
 
     with st.expander("Unique Programs"):
-        unique_program_table = merged_data.groupby('Program_uploaded').agg(
+        unique_program_table = merged_data.groupby(['Program_uploaded', 'TYPE_uploaded']).agg(
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
         unique_program_table.index = range(1, len(unique_program_table) + 1)
