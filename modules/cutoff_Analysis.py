@@ -42,32 +42,14 @@ def display_cutoff_Analysis():
     combined_remarks_analysis = aiqr2_data.groupby(['R1 Remarks', 'R2 Final Remarks']).size().reset_index(name='Count')
 
     # Tabs for analysis
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "AIR Allotment Analysis",
+    tab1, tab2, tab3 = st.tabs([
         "Course and Category Analysis",
         "Remarks Analysis",
         "Comparison Analysis"
     ])
 
-    # Tab 1: AIR Allotment Analysis
+    # Tab 1: Course and Category Analysis
     with tab1:
-        st.write("### AIR Allotment Analysis")
-
-        air_range = st.slider("Select AIR Range:", 
-                              int(aiqr2_data['NEET AIR'].min()), 
-                              int(aiqr2_data['NEET AIR'].max()), 
-                              (int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max())))
-
-        filtered_air_data = aiqr2_data[(aiqr2_data['NEET AIR'] >= air_range[0]) & (aiqr2_data['NEET AIR'] <= air_range[1])]
-        st.write(f"### AIR Range: {air_range[0]} - {air_range[1]}")
-
-        # Format NEET AIR column for display without commas
-        formatted_data = filtered_air_data.copy()
-        formatted_data['NEET AIR'] = formatted_data['NEET AIR'].astype(str)
-        st.dataframe(formatted_data)
-
-    # Tab 2: Course and Category Analysis
-    with tab2:
         st.write("### Course and Category Analysis")
 
         # Dropdown filters
@@ -96,8 +78,8 @@ def display_cutoff_Analysis():
         st.write(f"### Pivot Table: Maximum NEET AIR by Course and Category (Quota: {quota_filter})")
         st.dataframe(pivot_table)
 
-    # Tab 3: Remarks Analysis
-    with tab3:
+    # Tab 2: Remarks Analysis
+    with tab2:
         st.write("### Remarks Analysis")
 
         # Display combined remarks table
@@ -127,12 +109,11 @@ def display_cutoff_Analysis():
             mime="text/csv"
         )
 
-    # Tab 4: Comparison Analysis
-    with tab4:
-        st.write("### Comparison Analysis")
+    # Tab 3: Comparison Analysis
+    with tab3:
+        st.sidebar.write("### Comparison Filters")
 
         # Add comparison filters
-        st.sidebar.write("### Comparison Filters")
         compare_r1 = st.sidebar.multiselect("Select R1 Remarks to Compare:", aiqr2_data['R1 Remarks'].unique())
         compare_r2 = st.sidebar.multiselect("Select R2 Remarks to Compare:", aiqr2_data['R2 Final Remarks'].unique())
         compare_r1_quota = st.sidebar.multiselect("Select R1 Allotted Quota:", aiqr2_data['R1 Allotted Quota'].unique())
@@ -141,17 +122,26 @@ def display_cutoff_Analysis():
         compare_r2_course = st.sidebar.multiselect("Select R2 Final Course:", aiqr2_data['R2 Final Course'].unique())
         compare_r2_category = st.sidebar.multiselect("Select R2 Final Alloted Category:", aiqr2_data['R2 Final Alloted Category'].unique())
 
-        if any([compare_r1, compare_r2, compare_r1_quota, compare_r1_course, compare_r2_quota, compare_r2_course, compare_r2_category]):
-            filtered_comparison_data = aiqr2_data[
-                (aiqr2_data['R1 Remarks'].isin(compare_r1) if compare_r1 else True) &
-                (aiqr2_data['R2 Final Remarks'].isin(compare_r2) if compare_r2 else True) &
-                (aiqr2_data['R1 Allotted Quota'].isin(compare_r1_quota) if compare_r1_quota else True) &
-                (aiqr2_data['R1 Course'].isin(compare_r1_course) if compare_r1_course else True) &
-                (aiqr2_data['R2 Final Allotted Quota'].isin(compare_r2_quota) if compare_r2_quota else True) &
-                (aiqr2_data['R2 Final Course'].isin(compare_r2_course) if compare_r2_course else True) &
-                (aiqr2_data['R2 Final Alloted Category'].isin(compare_r2_category) if compare_r2_category else True)
-            ]
-            st.dataframe(filtered_comparison_data)
+        st.sidebar.button("Clear Filters", on_click=lambda: st.experimental_rerun())
+
+        # Filter logic with interdependent filters
+        if compare_r1:
+            aiqr2_data = aiqr2_data[aiqr2_data['R1 Remarks'].isin(compare_r1)]
+        if compare_r2:
+            aiqr2_data = aiqr2_data[aiqr2_data['R2 Final Remarks'].isin(compare_r2)]
+        if compare_r1_quota:
+            aiqr2_data = aiqr2_data[aiqr2_data['R1 Allotted Quota'].isin(compare_r1_quota)]
+        if compare_r1_course:
+            aiqr2_data = aiqr2_data[aiqr2_data['R1 Course'].isin(compare_r1_course)]
+        if compare_r2_quota:
+            aiqr2_data = aiqr2_data[aiqr2_data['R2 Final Allotted Quota'].isin(compare_r2_quota)]
+        if compare_r2_course:
+            aiqr2_data = aiqr2_data[aiqr2_data['R2 Final Course'].isin(compare_r2_course)]
+        if compare_r2_category:
+            aiqr2_data = aiqr2_data[aiqr2_data['R2 Final Alloted Category'].isin(compare_r2_category)]
+
+        st.write("### Filtered Comparison Results")
+        st.dataframe(aiqr2_data)
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
