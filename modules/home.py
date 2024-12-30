@@ -4,7 +4,7 @@ def display_home():
     st.title("Welcome to ETERNALS")
     
     # Insert an image
-    st.image("path_to_your_image.jpg", caption="ETERNALS Logo", use_column_width=True)
+    st.image("data/maxresdefault.jpg", caption="ETERNALS Logo", use_column_width=True)
     
     st.markdown("""
     ## Home Page
