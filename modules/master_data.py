@@ -22,21 +22,21 @@ def display_master_data():
         # Adjust the index to start from 1
         master_sheet.index = master_sheet.index + 1
 
-        # Allow the user to reorder columns
+        # Allow the user to select columns to display
         all_columns = master_sheet.columns.tolist()
-        reordered_columns = st.multiselect(
-            "Reorder columns:",
+        selected_columns = st.multiselect(
+            "Select columns to display:",
             options=all_columns,
-            default=all_columns
+            default=all_columns  # By default, show all columns
         )
 
-        if reordered_columns:
-            reordered_data = master_sheet[reordered_columns]
+        if selected_columns:
+            filtered_data = master_sheet[selected_columns]
 
-            # Display the reordered table
-            numeric_columns = reordered_data.select_dtypes(include=['int64', 'float64']).columns
-            st.write("### Reordered Master Sheet")
-            st.dataframe(reordered_data.style.format({col: "{:.0f}" for col in numeric_columns}))
+            # Display the filtered table
+            numeric_columns = filtered_data.select_dtypes(include=['int64', 'float64']).columns
+            st.write("### Filtered Master Sheet")
+            st.dataframe(filtered_data.style.format({col: "{:.0f}" for col in numeric_columns}))
         else:
             st.warning("Please select at least one column to display.")
 
