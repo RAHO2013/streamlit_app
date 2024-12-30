@@ -56,42 +56,13 @@ def display_comparison():
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
-            # Combine State, Program, Type, and Student Orders into a single table
-            summary_table = merged_data.groupby(['State', 'Program_uploaded', 'Quota_uploaded']).agg(
-                Options_Filled=('MAIN CODE', 'count'),
-                Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
-            ).reset_index()
-
-            # Add Student Order Ranges as the first column
-            summary_table.insert(0, 'Student_Order_Ranges', summary_table.pop('Student_Order_Ranges'))
-
-            # Split Student Order ranges into separate columns
-            summary_table['Student_Order_From'] = summary_table['Student_Order_Ranges'].str.extract(r'^([\d]+)', expand=False).astype(float)
-            summary_table['Student_Order_To'] = summary_table['Student_Order_Ranges'].str.extract(r'([\d]+)$', expand=False).astype(float)
-
-            # If there is no range, fill 'To' column with 'From' value
-            summary_table['Student_Order_To'].fillna(summary_table['Student_Order_From'], inplace=True)
-
-            # Sort the summary table by numeric columns for correct ascending order
-            summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
-
-            # Create unique tables for State, Program, and Type with Options_Filled column
-            unique_state_table = merged_data.groupby('State').agg(
-                Options_Filled=('MAIN CODE', 'count')
-            ).reset_index()
-
-            unique_program_table = merged_data.groupby('Program_uploaded').agg(
-                Options_Filled=('MAIN CODE', 'count')
-            ).reset_index()
-
-            unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
-                Options_Filled=('MAIN CODE', 'count')
-            ).reset_index()
-
             # Extract Fee and Cutoff data
             fee_cutoff_table = merged_data[[
-                'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'SERVICE YEARS', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'COURSE TYPE'
+                'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'
             ]].dropna(how='all').reset_index(drop=True)
+
+            # Convert Fees to numeric for proper sorting
+            fee_cutoff_table['Fees'] = pd.to_numeric(fee_cutoff_table['Fees'], errors='coerce')
 
             # Tabs for displaying data
             tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -107,83 +78,34 @@ def display_comparison():
                 st.write("### Merged Data")
                 st.dataframe(merged_data)
 
-            # Tab 2: Summary Table
-            with tab2:
-                st.write("### State, Program, Type with Student Orders")
-                st.dataframe(summary_table)
-
-            # Tab 3: Validation
-            with tab3:
-                with st.expander("Unmatched Rows"):
-                    st.write("### Unmatched Rows")
-                    missing_in_master = comparison_sheet[~comparison_sheet['MAIN CODE'].isin(master_sheet['MAIN CODE'])]
-                    missing_in_comparison = master_sheet[~master_sheet['MAIN CODE'].isin(comparison_sheet['MAIN CODE'])]
-
-                    if not missing_in_master.empty:
-                        st.write("### Rows in Uploaded File with Missing Matches in Master File")
-                        st.dataframe(missing_in_master)
-
-                    if not missing_in_comparison.empty:
-                        st.write("### Rows in Master File with Missing Matches in Uploaded File")
-                        st.dataframe(missing_in_comparison)
-
-                with st.expander("Duplicates"):
-                    st.write("### Duplicates")
-                    duplicate_in_uploaded = comparison_sheet[comparison_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
-                    duplicate_in_master = master_sheet[master_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
-
-                    if not duplicate_in_uploaded.empty:
-                        st.write("### Duplicate MAIN CODE Entries in Uploaded File")
-                        st.dataframe(duplicate_in_uploaded)
-
-                    if not duplicate_in_master.empty:
-                        st.write("### Duplicate MAIN CODE Entries in Master File")
-                        st.dataframe(duplicate_in_master)
-
-                with st.expander("Missing Values"):
-                    st.write("### Missing Values")
-                    missing_values = merged_data[merged_data.isnull().any(axis=1)]
-
-                    if not missing_values.empty:
-                        st.write("### Rows with Missing Values in Merged Data")
-                        st.dataframe(missing_values)
-                    else:
-                        st.success("No missing values found in the merged data!")
-
-            # Tab 4: Unique Tables
-            with tab4:
-                with st.expander("Unique States"):
-                    st.write("### Unique States")
-                    st.dataframe(unique_state_table)
-
-                with st.expander("Unique Programs"):
-                    st.write("### Unique Programs")
-                    st.dataframe(unique_program_table)
-
-                with st.expander("Unique Types"):
-                    st.write("### Unique Types")
-                    st.dataframe(unique_type_table)
-
-            # Tab 5: Fee and Cutoff Data
+            # Tab 2: Fee and Cutoff Data
             with tab5:
                 st.write("### Fee and Cutoff Data")
 
                 # Dropdown to filter Fee and Cutoff data
                 selected_column = st.selectbox(
                     "Select Fee or Cutoff to Display:",
-                    options=['OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF','SERVICE YEARS'],
+                    options=['OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'],
                     index=0
                 )
 
                 filtered_fee_cutoff_table = fee_cutoff_table[[
-                    'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Fees', selected_column
+                    'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', selected_column
                 ]].rename(columns={
                     'College Name_master': 'College Name',
                     'Program_uploaded': 'Program',
                     'TYPE_uploaded': 'Type'
                 })
 
-                st.dataframe(filtered_fee_cutoff_table)
+                # Sort the table by Fees and Student Order
+                filtered_fee_cutoff_table = filtered_fee_cutoff_table.sort_values(
+                    by=['Fees', 'Student Order'], ascending=True, na_position='last'
+                )
+
+                st.dataframe(filtered_fee_cutoff_table.style.format({
+                    'Fees': "{:.0f}",
+                    selected_column: "{:.0f}" if selected_column != 'SERVICE YEARS' else "{}"
+                }))
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
