@@ -179,8 +179,12 @@ def display_cutoff_Analysis():
                               value=(int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max())))
         filtered_data = filtered_data[(filtered_data['NEET AIR'] >= air_range[0]) & (filtered_data['NEET AIR'] <= air_range[1])]
 
+        # Display filtered data
+        st.write("### Filtered Comparison Results Table")
+        st.dataframe(filtered_data)
+
         # Scatter Plot: Filtered Data
-        st.write("### Scatter Plot: Filtered Comparison Results")
+        st.write("### Filtered Comparison Results Scatter Plot")
         fig, ax = plt.subplots()
         sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
         ax.set_title('Filtered Comparison: NEET AIR vs Course Allotments', fontsize=16)
