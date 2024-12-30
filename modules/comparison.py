@@ -47,7 +47,7 @@ def display_comparison():
             comparison_sheet.sort_values(by='Student Order', inplace=True)
 
             # Create MAIN CODE in the comparison file
-            comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip()  "_" + comparison_sheet['Quota'].str.strip()
+            comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip() + "_" + comparison_sheet['Quota'].str.strip()
 
             # Create MAIN CODE in the master sheet
             if {'MCC College Code', 'COURSE CODE'}.issubset(master_sheet.columns):
