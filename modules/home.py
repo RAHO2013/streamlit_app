@@ -4,7 +4,7 @@ def display_home():
     st.title("Welcome to ETERNALS")
     
     # Insert an image from the 'data' folder with the updated parameter
-    st.image("data/your_image.jpg", caption="ETERNALS Logo", use_container_width=True)
+    st.image("data/maxresdefault.jpg", caption="ETERNALS Logo", use_container_width=True)
     
     st.markdown("""
     ## Home Page
