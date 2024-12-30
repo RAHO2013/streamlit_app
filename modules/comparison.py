@@ -22,7 +22,6 @@ def display_comparison():
             comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1', dtype=str)
 
             # Rename columns in the uploaded file
-            st.write("### Renaming Columns in Uploaded File")
             expected_columns = [
                 "MCC College Code",
                 "College Name",
@@ -33,36 +32,22 @@ def display_comparison():
                 "Student Order"
             ]
 
-            # Validate the uploaded file has enough columns
             if len(comparison_sheet.columns) < len(expected_columns):
                 st.error("Uploaded file must have at least 7 columns.")
                 return
 
-            # Rename only the first 7 columns to match expected structure
             comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
 
-            # Clean and process Student Order to handle unexpected formats
-            comparison_sheet['Student Order'] = comparison_sheet['Student Order'].str.replace(',', '').astype(float, errors='ignore')
+            # Clean and process Student Order
             comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
             comparison_sheet.sort_values(by='Student Order', inplace=True)
 
-            # Create MAIN CODE in the comparison file
+            # Create MAIN CODE
             comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip() + "_" + comparison_sheet['Quota'].str.strip()
-
-            # Create MAIN CODE in the master sheet
-            if {'MCC College Code', 'COURSE CODE'}.issubset(master_sheet.columns):
-                master_sheet['MAIN CODE'] = master_sheet['MCC College Code'].astype(str).str.strip() + "_" + master_sheet['COURSE CODE'].astype(str).str.strip() + "_" + master_sheet['Quota'].astype(str).str.strip()
+            master_sheet['MAIN CODE'] = master_sheet['MCC College Code'].str.strip() + "_" + master_sheet['COURSE CODE'].str.strip() + "_" + master_sheet['Quota'].str.strip()
 
             # Merge data based on MAIN CODE
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
-
-            # Extract Fee and Cutoff data
-            fee_cutoff_table = merged_data[[
-                'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'
-            ]].dropna(how='all').reset_index(drop=True)
-
-            # Convert Fees to numeric for proper sorting
-            fee_cutoff_table['Fees'] = pd.to_numeric(fee_cutoff_table['Fees'], errors='coerce')
 
             # Tabs for displaying data
             tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -73,47 +58,131 @@ def display_comparison():
                 "Fee and Cutoff Data"
             ])
 
-            # Tab 1: Merged Data
             with tab1:
-                st.write("### Merged Data")
-                st.dataframe(merged_data)
+                display_merged_data(merged_data)
 
-            # Tab 2: Fee and Cutoff Data
+            with tab2:
+                display_summary_table(merged_data)
+
+            with tab3:
+                display_validation(comparison_sheet, master_sheet, merged_data)
+
+            with tab4:
+                display_unique_tables(merged_data)
+
             with tab5:
-                st.write("### Fee and Cutoff Data")
-
-                # Dropdown to filter Fee and Cutoff data
-                selected_column = st.selectbox(
-                    "Select Fee or Cutoff to Display:",
-                    options=['OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'],
-                    index=0
-                )
-
-                filtered_fee_cutoff_table = fee_cutoff_table[[
-                    'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', selected_column
-                ]].rename(columns={
-                    'College Name_master': 'College Name',
-                    'Program_uploaded': 'Program',
-                    'TYPE_uploaded': 'Type'
-                })
-
-                # Sort the table by Fees and Student Order
-                filtered_fee_cutoff_table = filtered_fee_cutoff_table.sort_values(
-                    by=['Fees', 'Student Order'], ascending=True, na_position='last'
-                )
-
-                st.dataframe(filtered_fee_cutoff_table.style.format({
-                    'Fees': "{:.0f}",
-                    selected_column: "{:.0f}" if selected_column != 'SERVICE YEARS' else "{}"
-                }))
+                display_fee_cutoff_data(merged_data)
 
         except Exception as e:
             st.error(f"An error occurred while processing the uploaded file: {e}")
     else:
         st.info("Please upload an Excel file for comparison.")
 
+def display_merged_data(merged_data):
+    st.write("### Merged Data")
+    st.dataframe(merged_data)
+
+def display_summary_table(merged_data):
+    st.write("### State, Program, Type with Student Orders")
+    summary_table = merged_data.groupby(['State', 'Program_uploaded', 'Quota_uploaded']).agg(
+        Options_Filled=('MAIN CODE', 'count'),
+        Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
+    ).reset_index()
+
+    summary_table.insert(0, 'Student_Order_Ranges', summary_table.pop('Student_Order_Ranges'))
+    summary_table['Student_Order_From'] = summary_table['Student_Order_Ranges'].str.extract(r'^([\d]+)', expand=False).astype(float)
+    summary_table['Student_Order_To'] = summary_table['Student_Order_Ranges'].str.extract(r'([\d]+)$', expand=False).astype(float)
+    summary_table['Student_Order_To'].fillna(summary_table['Student_Order_From'], inplace=True)
+
+    summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
+
+    st.dataframe(summary_table)
+
+def display_validation(comparison_sheet, master_sheet, merged_data):
+    st.write("### Validation")
+    with st.expander("Unmatched Rows"):
+        missing_in_master = comparison_sheet[~comparison_sheet['MAIN CODE'].isin(master_sheet['MAIN CODE'])]
+        missing_in_comparison = master_sheet[~master_sheet['MAIN CODE'].isin(comparison_sheet['MAIN CODE'])]
+
+        if not missing_in_master.empty:
+            st.write("### Rows in Uploaded File with Missing Matches in Master File")
+            st.dataframe(missing_in_master)
+
+        if not missing_in_comparison.empty:
+            st.write("### Rows in Master File with Missing Matches in Uploaded File")
+            st.dataframe(missing_in_comparison)
+
+    with st.expander("Duplicates"):
+        duplicate_in_uploaded = comparison_sheet[comparison_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
+        duplicate_in_master = master_sheet[master_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
+
+        if not duplicate_in_uploaded.empty:
+            st.write("### Duplicate MAIN CODE Entries in Uploaded File")
+            st.dataframe(duplicate_in_uploaded)
+
+        if not duplicate_in_master.empty:
+            st.write("### Duplicate MAIN CODE Entries in Master File")
+            st.dataframe(duplicate_in_master)
+
+    with st.expander("Missing Values"):
+        missing_values = merged_data[merged_data.isnull().any(axis=1)]
+        if not missing_values.empty:
+            st.write("### Rows with Missing Values in Merged Data")
+            st.dataframe(missing_values)
+        else:
+            st.success("No missing values found in the merged data!")
+
+def display_unique_tables(merged_data):
+    st.write("### Unique Tables")
+    with st.expander("Unique States"):
+        unique_state_table = merged_data.groupby('State').agg(
+            Options_Filled=('MAIN CODE', 'count')
+        ).reset_index()
+        st.dataframe(unique_state_table)
+
+    with st.expander("Unique Programs"):
+        unique_program_table = merged_data.groupby('Program_uploaded').agg(
+            Options_Filled=('MAIN CODE', 'count')
+        ).reset_index()
+        st.dataframe(unique_program_table)
+
+    with st.expander("Unique Types"):
+        unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
+            Options_Filled=('MAIN CODE', 'count')
+        ).reset_index()
+        st.dataframe(unique_type_table)
+
+def display_fee_cutoff_data(merged_data):
+    st.write("### Fee and Cutoff Data")
+    fee_cutoff_table = merged_data[[
+        'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'
+    ]].dropna(how='all').reset_index(drop=True)
+
+    fee_cutoff_table['Fees'] = pd.to_numeric(fee_cutoff_table['Fees'], errors='coerce')
+
+    selected_column = st.selectbox(
+        "Select Fee or Cutoff to Display:",
+        options=['OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'],
+        index=0
+    )
+
+    filtered_fee_cutoff_table = fee_cutoff_table[[
+        'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', selected_column
+    ]].rename(columns={
+        'College Name_master': 'College Name',
+        'Program_uploaded': 'Program',
+        'TYPE_uploaded': 'Type'
+    })
+
+    filtered_fee_cutoff_table = filtered_fee_cutoff_table.sort_values(by=['Fees', 'Student Order'], ascending=True, na_position='last')
+
+    st.dataframe(filtered_fee_cutoff_table.style.format({
+        'Fees': "{:.0f}",
+        'Student Order': "{:.0f}",
+        selected_column: "{:.0f}" if selected_column != 'SERVICE YEARS' else "{}"
+    }))
+
 def split_ranges(lst):
-    """Split a list of integers into start and end ranges."""
     if not lst:
         return ""
     ranges = []
@@ -125,3 +194,6 @@ def split_ranges(lst):
             start = lst[i]
     ranges.append(f"{start}-{lst[-1]}" if start != lst[-1] else f"{start}")
     return ", ".join(ranges)
+
+# Call the function to display the dashboard
+display_comparison()
