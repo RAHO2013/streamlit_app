@@ -119,7 +119,30 @@ def display_cutoff_Analysis():
             default=aiqr2_data['R2 Final Course'].unique()
         )
 
-        filtered_data = aiqr2_data[aiqr2_data['R2 Final Course'].isin(course_filter)]
+        r2_quota_filter = st.multiselect(
+            "Select R2 Final Allotted Quota to Include:",
+            options=aiqr2_data['R2 Final Allotted Quota'].unique(),
+            default=aiqr2_data['R2 Final Allotted Quota'].unique()
+        )
+
+        r1_quota_filter = st.multiselect(
+            "Select R1 Allotted Quota to Include:",
+            options=aiqr2_data['R1 Allotted Quota'].unique(),
+            default=aiqr2_data['R1 Allotted Quota'].unique()
+        )
+
+        r2_category_filter = st.multiselect(
+            "Select R2 Final Alloted Category to Include:",
+            options=aiqr2_data['R2 Final Alloted Category'].unique(),
+            default=aiqr2_data['R2 Final Alloted Category'].unique()
+        )
+
+        filtered_data = aiqr2_data[
+            aiqr2_data['R2 Final Course'].isin(course_filter) &
+            aiqr2_data['R2 Final Allotted Quota'].isin(r2_quota_filter) &
+            aiqr2_data['R1 Allotted Quota'].isin(r1_quota_filter) &
+            aiqr2_data['R2 Final Alloted Category'].isin(r2_category_filter)
+        ]
 
         # Scatter Plot: NEET AIR vs Course
         fig, ax = plt.subplots()
