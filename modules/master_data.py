@@ -22,12 +22,23 @@ def display_master_data():
         # Adjust the index to start from 1
         master_sheet.index = master_sheet.index + 1
 
-        # Select numeric columns to format
-        numeric_columns = master_sheet.select_dtypes(include=['int64', 'float64']).columns
+        # Allow the user to select columns to display
+        all_columns = master_sheet.columns.tolist()
+        selected_columns = st.multiselect(
+            "Select columns to display:",
+            options=all_columns,
+            default=all_columns  # By default, show all columns
+        )
 
-        # Display the master sheet with formatting
-        st.write("### Master Sheet (Formatted)")
-        st.dataframe(master_sheet.style.format({col: "{:.0f}" for col in numeric_columns}))
+        if selected_columns:
+            filtered_data = master_sheet[selected_columns]
+
+            # Display the filtered table
+            numeric_columns = filtered_data.select_dtypes(include=['int64', 'float64']).columns
+            st.write("### Filtered Master Sheet")
+            st.dataframe(filtered_data.style.format({col: "{:.0f}" for col in numeric_columns}))
+        else:
+            st.warning("Please select at least one column to display.")
 
 # Call the function to display the data
 display_master_data()
