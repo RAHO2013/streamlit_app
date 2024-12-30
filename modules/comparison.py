@@ -57,7 +57,7 @@ def display_comparison():
             merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
 
             # Combine State, Program, Type, and Student Orders into a single table
-            summary_table = merged_data.groupby(['State', 'Program_uploaded', 'TYPE_uploaded']).agg(
+            summary_table = merged_data.groupby(['State', 'Program_uploaded', 'Quota_uploaded']).agg(
                 Options_Filled=('MAIN CODE', 'count'),
                 Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
             ).reset_index()
