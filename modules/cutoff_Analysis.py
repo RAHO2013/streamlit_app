@@ -35,6 +35,9 @@ def display_cutoff_Analysis():
         regex=True
     )
 
+    # Replace '-' in R1 Remarks with 'R1 Not Allotted'
+    aiqr2_data['R1 Remarks'] = aiqr2_data['R1 Remarks'].replace('-', 'R1 Not Allotted')
+
     # Combine R1 and R2 remarks for heatmap analysis
     combined_remarks_analysis = aiqr2_data.groupby(['R1 Remarks', 'R2 Final Remarks']).size().reset_index(name='Count')
 
@@ -62,12 +65,20 @@ def display_cutoff_Analysis():
         formatted_data['NEET AIR'] = formatted_data['NEET AIR'].astype(str)
         st.dataframe(formatted_data)
 
-        # Graph
+        # Graph: Quota distribution in selected AIR range
         fig, ax = plt.subplots()
         filtered_air_data['R1 Allotted Quota'].value_counts().plot(kind='bar', ax=ax)
         ax.set_title("Quota Distribution in Selected AIR Range")
         ax.set_xlabel("Quota")
         ax.set_ylabel("Count")
+        st.pyplot(fig)
+
+        # Additional Chart: Comparing quotas across all data
+        st.write("### Quota Distribution Across All Data")
+        fig, ax = plt.subplots()
+        aiqr2_data['R1 Allotted Quota'].value_counts().plot(kind='pie', autopct='%1.1f%%', ax=ax)
+        ax.set_ylabel("")
+        ax.set_title("Overall Quota Distribution")
         st.pyplot(fig)
 
     # Tab 2: Course and Category Analysis
@@ -120,6 +131,29 @@ def display_cutoff_Analysis():
         ax.set_xlabel("R2 Final Remarks", fontsize=12)
         ax.set_ylabel("R1 Remarks", fontsize=12)
         st.pyplot(fig)
+
+        # Export functionality
+        st.write("#### Export Analysis Data")
+        export_data = combined_remarks_analysis.to_csv(index=False)
+        st.download_button(
+            label="Download Combined Remarks Data as CSV",
+            data=export_data,
+            file_name="combined_remarks_analysis.csv",
+            mime="text/csv"
+        )
+
+    # Add comparison filters
+    st.sidebar.write("### Comparison Filters")
+    compare_r1 = st.sidebar.multiselect("Select R1 Remarks to Compare:", aiqr2_data['R1 Remarks'].unique())
+    compare_r2 = st.sidebar.multiselect("Select R2 Remarks to Compare:", aiqr2_data['R2 Final Remarks'].unique())
+
+    if compare_r1 or compare_r2:
+        st.write("### Comparison Analysis")
+        filtered_comparison_data = aiqr2_data[
+            (aiqr2_data['R1 Remarks'].isin(compare_r1) if compare_r1 else True) &
+            (aiqr2_data['R2 Final Remarks'].isin(compare_r2) if compare_r2 else True)
+        ]
+        st.dataframe(filtered_comparison_data)
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
