@@ -139,9 +139,17 @@ def display_cutoff_Analysis():
             )
             filtered_data = filtered_data[filtered_data['R1 Allotted Quota'].isin(compare_r1_quota)] if compare_r1_quota else filtered_data
 
-        col4, col5, col6 = st.columns(3)
+        col4, col5, col6, col7, col8 = st.columns(5)
 
         with col4:
+            compare_r1_remarks = st.multiselect(
+                "Select R1 Final Remarks:",
+                options=filtered_data['R1 Remarks'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R1 Remarks'].isin(compare_r1_remarks)] if compare_r1_remarks else filtered_data
+
+        with col5:
             compare_r1_course = st.multiselect(
                 "Select R1 Course:",
                 options=filtered_data['R1 Course'].unique(),
@@ -158,6 +166,14 @@ def display_cutoff_Analysis():
             filtered_data = filtered_data[filtered_data['R2 Final Allotted Quota'].isin(compare_r2_quota)] if compare_r2_quota else filtered_data
 
         with col6:
+            compare_r2_remarks = st.multiselect(
+                "Select R2 Final Remarks:",
+                options=filtered_data['R2 Final Remarks'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R2 Final Remarks'].isin(compare_r2_remarks)] if compare_r2_remarks else filtered_data
+
+        with col7:
             compare_r2_course = st.multiselect(
                 "Select R2 Final Course:",
                 options=filtered_data['R2 Final Course'].unique(),
