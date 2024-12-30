@@ -22,13 +22,13 @@ def display_master_data():
         # Adjust the index to start from 1
         master_sheet.index = master_sheet.index + 1
 
-        # Allow the user to reorder columns
+        # Allow the user to reorder columns with a unique key
         all_columns = master_sheet.columns.tolist()
         reordered_columns = st.multiselect(
             "Reorder columns:",
             options=all_columns,
             default=all_columns,
-            key="reorder_columns_master_data"  # Unique key for this widget
+            key=f"reorder_columns_{st.session_state.get('page', 'master_data')}"  # Unique key per session state
         )
 
         if reordered_columns:
