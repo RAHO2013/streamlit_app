@@ -80,9 +80,6 @@ def display_comparison():
 
 def display_merged_data(merged_data):
     st.write("### Merged Data")
-    sort_column = st.selectbox("Sort by column:", merged_data.columns)
-    sort_order = st.radio("Sort order:", ["Ascending", "Descending"])
-    merged_data = merged_data.sort_values(by=sort_column, ascending=(sort_order == "Ascending"))
     merged_data.index = range(1, len(merged_data) + 1)
     st.dataframe(merged_data)
 
@@ -99,9 +96,6 @@ def display_summary_table(merged_data):
     summary_table['Student_Order_To'].fillna(summary_table['Student_Order_From'], inplace=True)
 
     summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
-    sort_column = st.selectbox("Sort by column:", summary_table.columns, key="summary_sort")
-    sort_order = st.radio("Sort order:", ["Ascending", "Descending"], key="summary_order")
-    summary_table = summary_table.sort_values(by=sort_column, ascending=(sort_order == "Ascending"))
     summary_table.index = range(1, len(summary_table) + 1)
 
     st.dataframe(summary_table)
@@ -151,19 +145,13 @@ def display_unique_tables(merged_data):
         unique_state_table = merged_data.groupby('State').agg(
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
-        sort_column = st.selectbox("Sort by column:", unique_state_table.columns, key="state_sort")
-        sort_order = st.radio("Sort order:", ["Ascending", "Descending"], key="state_order")
-        unique_state_table = unique_state_table.sort_values(by=sort_column, ascending=(sort_order == "Ascending"))
         unique_state_table.index = range(1, len(unique_state_table) + 1)
         st.dataframe(unique_state_table)
 
     with st.expander("Unique Programs"):
-        unique_program_table = merged_data.groupby(['Program_uploaded', 'TYPE_uploaded']).agg(
+        unique_program_table = merged_data.groupby('Program_uploaded').agg(
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
-        sort_column = st.selectbox("Sort by column:", unique_program_table.columns, key="program_sort")
-        sort_order = st.radio("Sort order:", ["Ascending", "Descending"], key="program_order")
-        unique_program_table = unique_program_table.sort_values(by=sort_column, ascending=(sort_order == "Ascending"))
         unique_program_table.index = range(1, len(unique_program_table) + 1)
         st.dataframe(unique_program_table)
 
@@ -171,9 +159,6 @@ def display_unique_tables(merged_data):
         unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
-        sort_column = st.selectbox("Sort by column:", unique_type_table.columns, key="type_sort")
-        sort_order = st.radio("Sort order:", ["Ascending", "Descending"], key="type_order")
-        unique_type_table = unique_type_table.sort_values(by=sort_column, ascending=(sort_order == "Ascending"))
         unique_type_table.index = range(1, len(unique_type_table) + 1)
         st.dataframe(unique_type_table)
 
@@ -200,9 +185,7 @@ def display_fee_cutoff_data(merged_data):
         'TYPE_uploaded': 'Type'
     })
 
-    sort_column = st.selectbox("Sort by column:", filtered_fee_cutoff_table.columns, key="fee_sort")
-    sort_order = st.radio("Sort order:", ["Ascending", "Descending"], key="fee_order")
-    filtered_fee_cutoff_table = filtered_fee_cutoff_table.sort_values(by=sort_column, ascending=(sort_order == "Ascending"))
+    filtered_fee_cutoff_table = filtered_fee_cutoff_table.sort_values(by=['Fees', 'Student Order'], ascending=True, na_position='last')
     filtered_fee_cutoff_table.index = range(1, len(filtered_fee_cutoff_table) + 1)
 
     st.dataframe(filtered_fee_cutoff_table.style.format({
