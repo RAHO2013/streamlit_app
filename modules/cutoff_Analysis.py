@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 def display_cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
@@ -26,6 +27,16 @@ def display_cutoff_Analysis():
     # Ensure NEET AIR is numeric for proper sorting and calculations
     aiqr2_data['NEET AIR'] = pd.to_numeric(aiqr2_data['NEET AIR'], errors='coerce')
     aiqr2_data['NEET AIR'] = aiqr2_data['NEET AIR'].apply(lambda x: int(x) if pd.notnull(x) else '-')
+
+    # Collapse AFMS-related remarks
+    aiqr2_data['R2 Final Remarks'] = aiqr2_data['R2 Final Remarks'].replace(
+        to_replace=r'Fresh Allotted in 2nd Round\( AFMS Rank : \d+ \)', 
+        value='Fresh Allotted in 2nd Round (AFMS)', 
+        regex=True
+    )
+
+    # Combine R1 and R2 remarks for heatmap analysis
+    combined_remarks_analysis = aiqr2_data.groupby(['R1 Remarks', 'R2 Final Remarks']).size().reset_index(name='Count')
 
     # Tabs for analysis
     tab1, tab2, tab3 = st.tabs([
@@ -93,11 +104,22 @@ def display_cutoff_Analysis():
     with tab3:
         st.write("### Remarks Analysis")
 
-        remarks_selection = st.selectbox("Select Remarks Type:", ["R1 Remarks", "R2 Final Remarks"])
-        remarks_counts = aiqr2_data[remarks_selection].value_counts()
+        # Display combined remarks table
+        st.write("#### Combined R1 and R2 Remarks Analysis Table")
+        st.dataframe(combined_remarks_analysis)
 
-        st.write(f"### {remarks_selection} Distribution")
-        st.bar_chart(remarks_counts)
+        # Heatmap for combined remarks
+        st.write("#### Heatmap: R1 to R2 Remarks Transition")
+        pivot_data = combined_remarks_analysis.pivot(
+            index='R1 Remarks', columns='R2 Final Remarks', values='Count'
+        ).fillna(0)
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+        sns.heatmap(pivot_data, annot=True, fmt=".0f", cmap="YlGnBu", linewidths=0.5, ax=ax)
+        ax.set_title("R1 to R2 Remarks Transition Heatmap", fontsize=16)
+        ax.set_xlabel("R2 Final Remarks", fontsize=12)
+        ax.set_ylabel("R1 Remarks", fontsize=12)
+        st.pyplot(fig)
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
