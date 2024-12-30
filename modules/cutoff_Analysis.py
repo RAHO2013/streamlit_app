@@ -39,13 +39,11 @@ def display_cutoff_Analysis():
     aiqr2_data['R1 Remarks'] = aiqr2_data['R1 Remarks'].replace('-', 'R1 Not Allotted')
 
     # Tabs for analysis
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "Course and Category Analysis",
         "Remarks Analysis",
-        "Comparison Analysis",
-        "Distribution Analysis",
-        "Category Analysis",
-        "Rank-Based Analysis"
+        "Rank-Based Analysis",
+        "Comparison Analysis"
     ])
 
     # Tab 1: Course and Category Analysis
@@ -110,8 +108,29 @@ def display_cutoff_Analysis():
             mime="text/csv"
         )
 
-    # Tab 3: Comparison Analysis
+    # Tab 3: Rank-Based Analysis
     with tab3:
+        st.write("### Rank-Based Analysis")
+
+        # Filters for scatter plot
+        course_filter = st.multiselect(
+            "Select Courses to Include:",
+            options=aiqr2_data['R2 Final Course'].unique(),
+            default=aiqr2_data['R2 Final Course'].unique()
+        )
+
+        filtered_data = aiqr2_data[aiqr2_data['R2 Final Course'].isin(course_filter)]
+
+        # Scatter Plot: NEET AIR vs Course
+        fig, ax = plt.subplots()
+        sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
+        ax.set_title('NEET AIR vs Course Allotments', fontsize=16)
+        ax.set_xlabel('NEET AIR', fontsize=12)
+        ax.set_ylabel('Course', fontsize=12)
+        st.pyplot(fig)
+
+    # Tab 4: Comparison Analysis
+    with tab4:
         st.write("### Comparison Analysis")
 
         # Horizontal positioning for dynamic filters with interdependencies
@@ -185,53 +204,6 @@ def display_cutoff_Analysis():
         # Display filtered data
         st.write("### Filtered Comparison Results")
         st.dataframe(filtered_data)
-
-    # Tab 4: Distribution Analysis
-    with tab4:
-        st.write("### Distribution Analysis")
-
-        # Bar Chart: Distribution of R1 Allotted Quota
-        r1_quota_dist = aiqr2_data['R1 Allotted Quota'].value_counts()
-        st.bar_chart(r1_quota_dist)
-
-        # Pie Chart: Proportion of R2 Alloted Categories
-        fig, ax = plt.subplots()
-        aiqr2_data['R2 Final Alloted Category'].value_counts().plot(kind='pie', autopct='%1.1f%%', ax=ax)
-        ax.set_ylabel('')
-        ax.set_title('Proportion of R2 Final Alloted Categories')
-        st.pyplot(fig)
-
-    # Tab 5: Category Analysis
-    with tab5:
-        st.write("### Category Analysis")
-
-        # Heatmap: Category vs Course Allotments
-        category_course_pivot = aiqr2_data.pivot_table(
-            values='NEET AIR',
-            index='R2 Final Alloted Category',
-            columns='R2 Final Course',
-            aggfunc='count',
-            fill_value=0
-        )
-
-        fig, ax = plt.subplots(figsize=(12, 8))
-        sns.heatmap(category_course_pivot, annot=True, fmt="d", cmap="coolwarm", ax=ax)
-        ax.set_title('Category vs Course Allotments')
-        st.pyplot(fig)
-
-    # Tab 6: Rank-Based Analysis
-    with tab6:
-        st.write("### Rank-Based Analysis")
-
-        # Line Graph: NEET AIR vs Allotments
-        rank_allotments = aiqr2_data.groupby('NEET AIR').size()
-        st.line_chart(rank_allotments)
-
-        # Scatter Plot: NEET AIR vs Course
-        fig, ax = plt.subplots()
-        sns.scatterplot(data=aiqr2_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
-        ax.set_title('NEET AIR vs Course Allotments')
-        st.pyplot(fig)
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
