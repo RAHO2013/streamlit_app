@@ -22,24 +22,12 @@ def display_master_data():
         # Adjust the index to start from 1
         master_sheet.index = master_sheet.index + 1
 
-        # Allow the user to reorder columns with a unique key
-        all_columns = master_sheet.columns.tolist()
-        reordered_columns = st.multiselect(
-            "Reorder columns:",
-            options=all_columns,
-            default=all_columns,
-            key=f"reorder_columns_{st.session_state.get('page', 'master_data')}"  # Unique key per session state
-        )
+        # Select numeric columns to format
+        numeric_columns = master_sheet.select_dtypes(include=['int64', 'float64']).columns
 
-        if reordered_columns:
-            reordered_data = master_sheet[reordered_columns]
-
-            # Display the reordered table
-            numeric_columns = reordered_data.select_dtypes(include=['int64', 'float64']).columns
-            st.write("### Reordered Master Sheet")
-            st.dataframe(reordered_data.style.format({col: "{:.0f}" for col in numeric_columns}))
-        else:
-            st.warning("Please select at least one column to display.")
+        # Display the master sheet with formatting
+        st.write("### Master Sheet (Formatted)")
+        st.dataframe(master_sheet.style.format({col: "{:.0f}" for col in numeric_columns}))
 
 # Call the function to display the data
 display_master_data()
