@@ -27,7 +27,8 @@ def display_master_data():
         reordered_columns = st.multiselect(
             "Reorder columns:",
             options=all_columns,
-            default=all_columns
+            default=all_columns,
+            key="reorder_columns_master_data"  # Unique key for this widget
         )
 
         if reordered_columns:
