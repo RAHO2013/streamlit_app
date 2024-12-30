@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 def display_cutoff_Analysis():
@@ -64,22 +63,6 @@ def display_cutoff_Analysis():
         formatted_data = filtered_air_data.copy()
         formatted_data['NEET AIR'] = formatted_data['NEET AIR'].astype(str)
         st.dataframe(formatted_data)
-
-        # Graph: Quota distribution in selected AIR range
-        fig, ax = plt.subplots()
-        filtered_air_data['R1 Allotted Quota'].value_counts().plot(kind='bar', ax=ax)
-        ax.set_title("Quota Distribution in Selected AIR Range")
-        ax.set_xlabel("Quota")
-        ax.set_ylabel("Count")
-        st.pyplot(fig)
-
-        # Additional Chart: Comparing quotas across all data
-        st.write("### Quota Distribution Across All Data")
-        fig, ax = plt.subplots()
-        aiqr2_data['R1 Allotted Quota'].value_counts().plot(kind='pie', autopct='%1.1f%%', ax=ax)
-        ax.set_ylabel("")
-        ax.set_title("Overall Quota Distribution")
-        st.pyplot(fig)
 
     # Tab 2: Course and Category Analysis
     with tab2:
@@ -150,7 +133,7 @@ def display_cutoff_Analysis():
     compare_r1_course = st.sidebar.multiselect("Select R1 Course:", aiqr2_data['R1 Course'].unique())
     compare_r2_quota = st.sidebar.multiselect("Select R2 Final Allotted Quota:", aiqr2_data['R2 Final Allotted Quota'].unique())
     compare_r2_course = st.sidebar.multiselect("Select R2 Final Course:", aiqr2_data['R2 Final Course'].unique())
-    compare_r2_category = st.sidebar.multiselect("Select R2 Final Allotted Category:", aiqr2_data['R2 Final Allotted Category'].unique())
+    compare_r2_category = st.sidebar.multiselect("Select R2 Final Alloted Category:", aiqr2_data['R2 Final Alloted Category'].unique())
 
     if any([compare_r1, compare_r2, compare_r1_quota, compare_r1_course, compare_r2_quota, compare_r2_course, compare_r2_category]):
         st.write("### Comparison Analysis")
@@ -161,7 +144,7 @@ def display_cutoff_Analysis():
             (aiqr2_data['R1 Course'].isin(compare_r1_course) if compare_r1_course else True) &
             (aiqr2_data['R2 Final Allotted Quota'].isin(compare_r2_quota) if compare_r2_quota else True) &
             (aiqr2_data['R2 Final Course'].isin(compare_r2_course) if compare_r2_course else True) &
-            (aiqr2_data['R2 Final Allotted Category'].isin(compare_r2_category) if compare_r2_category else True)
+            (aiqr2_data['R2 Final Alloted Category'].isin(compare_r2_category) if compare_r2_category else True)
         ]
         st.dataframe(filtered_comparison_data)
 
