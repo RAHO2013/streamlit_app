@@ -80,6 +80,7 @@ def display_comparison():
 
 def display_merged_data(merged_data):
     st.write("### Merged Data")
+    merged_data.index = range(1, len(merged_data) + 1)
     st.dataframe(merged_data)
 
 def display_summary_table(merged_data):
@@ -95,6 +96,7 @@ def display_summary_table(merged_data):
     summary_table['Student_Order_To'].fillna(summary_table['Student_Order_From'], inplace=True)
 
     summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
+    summary_table.index = range(1, len(summary_table) + 1)
 
     st.dataframe(summary_table)
 
@@ -106,10 +108,12 @@ def display_validation(comparison_sheet, master_sheet, merged_data):
 
         if not missing_in_master.empty:
             st.write("### Rows in Uploaded File with Missing Matches in Master File")
+            missing_in_master.index = range(1, len(missing_in_master) + 1)
             st.dataframe(missing_in_master)
 
         if not missing_in_comparison.empty:
             st.write("### Rows in Master File with Missing Matches in Uploaded File")
+            missing_in_comparison.index = range(1, len(missing_in_comparison) + 1)
             st.dataframe(missing_in_comparison)
 
     with st.expander("Duplicates"):
@@ -118,16 +122,19 @@ def display_validation(comparison_sheet, master_sheet, merged_data):
 
         if not duplicate_in_uploaded.empty:
             st.write("### Duplicate MAIN CODE Entries in Uploaded File")
+            duplicate_in_uploaded.index = range(1, len(duplicate_in_uploaded) + 1)
             st.dataframe(duplicate_in_uploaded)
 
         if not duplicate_in_master.empty:
             st.write("### Duplicate MAIN CODE Entries in Master File")
+            duplicate_in_master.index = range(1, len(duplicate_in_master) + 1)
             st.dataframe(duplicate_in_master)
 
     with st.expander("Missing Values"):
         missing_values = merged_data[merged_data.isnull().any(axis=1)]
         if not missing_values.empty:
             st.write("### Rows with Missing Values in Merged Data")
+            missing_values.index = range(1, len(missing_values) + 1)
             st.dataframe(missing_values)
         else:
             st.success("No missing values found in the merged data!")
@@ -138,18 +145,21 @@ def display_unique_tables(merged_data):
         unique_state_table = merged_data.groupby('State').agg(
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
+        unique_state_table.index = range(1, len(unique_state_table) + 1)
         st.dataframe(unique_state_table)
 
     with st.expander("Unique Programs"):
         unique_program_table = merged_data.groupby('Program_uploaded').agg(
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
+        unique_program_table.index = range(1, len(unique_program_table) + 1)
         st.dataframe(unique_program_table)
 
     with st.expander("Unique Types"):
         unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
+        unique_type_table.index = range(1, len(unique_type_table) + 1)
         st.dataframe(unique_type_table)
 
 def display_fee_cutoff_data(merged_data):
@@ -159,6 +169,7 @@ def display_fee_cutoff_data(merged_data):
     ]].dropna(how='all').reset_index(drop=True)
 
     fee_cutoff_table['Fees'] = pd.to_numeric(fee_cutoff_table['Fees'], errors='coerce')
+    fee_cutoff_table.index = range(1, len(fee_cutoff_table) + 1)
 
     selected_column = st.selectbox(
         "Select Fee or Cutoff to Display:",
@@ -175,6 +186,7 @@ def display_fee_cutoff_data(merged_data):
     })
 
     filtered_fee_cutoff_table = filtered_fee_cutoff_table.sort_values(by=['Fees', 'Student Order'], ascending=True, na_position='last')
+    filtered_fee_cutoff_table.index = range(1, len(filtered_fee_cutoff_table) + 1)
 
     st.dataframe(filtered_fee_cutoff_table.style.format({
         'Fees': "{:.0f}",
