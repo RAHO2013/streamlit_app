@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 def display_cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
