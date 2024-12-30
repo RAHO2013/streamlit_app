@@ -19,6 +19,15 @@ def display_master_data():
     master_sheet = load_master_file()
 
     if master_sheet is not None:
+        # Adjust the index to start from 1
+        master_sheet.index = master_sheet.index + 1
+
+        # Select numeric columns to format
         numeric_columns = master_sheet.select_dtypes(include=['int64', 'float64']).columns
+
+        # Display the master sheet with formatting
         st.write("### Master Sheet (Formatted)")
         st.dataframe(master_sheet.style.format({col: "{:.0f}" for col in numeric_columns}))
+
+# Call the function to display the data
+display_master_data()
