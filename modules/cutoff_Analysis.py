@@ -185,11 +185,12 @@ def display_cutoff_Analysis():
 
         # Scatter Plot: Filtered Data
         st.write("### Filtered Comparison Results Scatter Plot")
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(15, 10))
         sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
-        ax.set_title('Filtered Comparison: NEET AIR vs Course Allotments', fontsize=16)
-        ax.set_xlabel('NEET AIR', fontsize=12)
-        ax.set_ylabel('Course', fontsize=12)
+        ax.set_title('Filtered Comparison: NEET AIR vs Course Allotments', fontsize=16, loc='left')
+        ax.set_title('Dynamic Analysis', fontsize=12, loc='right')
+        ax.set_xlabel('NEET AIR', fontsize=14, labelpad=20)
+        ax.set_ylabel('Course', fontsize=14, labelpad=20)
         st.pyplot(fig)
 
 # Call the function to display the dashboard
