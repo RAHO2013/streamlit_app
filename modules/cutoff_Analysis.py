@@ -136,13 +136,6 @@ def display_cutoff_Analysis():
                 filtered_data = filtered_data[(filtered_data[column] >= min_val) & (filtered_data[column] <= max_val)]
                 active_filters.append(f"{column}: {min_val} to {max_val}")
 
-        # Display active filters in UI
-        st.write("### Active Filters:")
-        if active_filters:
-            st.write("; ".join(active_filters))
-        else:
-            st.write("No filters applied")
-
         # Scatter plot customization
         st.write("### Customize Scatter Plot")
         y_axis_column = st.selectbox("Select Y-Axis:", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Course'))
@@ -152,7 +145,7 @@ def display_cutoff_Analysis():
         def wrap_labels(labels, width=20):
             return ['\n'.join(textwrap.wrap(label, width)) for label in labels]
 
-        # Wrap Y-axis and hue labels to prevent horizontal overflow
+        # Wrap Y-axis labels to prevent horizontal overflow
         filtered_data[y_axis_column] = filtered_data[y_axis_column].astype(str)
         filtered_data[y_axis_column] = wrap_labels(filtered_data[y_axis_column])
 
@@ -182,7 +175,7 @@ def display_cutoff_Analysis():
             )
 
             ax.set_title(
-                f'Filtered Comparison: NEET AIR vs {y_axis_column}\n' + filter_description,
+                f'Filtered Comparison: NEET AIR vs {y_axis_column}',
                 fontsize=14, loc='center'
             )
             ax.set_xlabel('NEET AIR', fontsize=14)
@@ -200,6 +193,14 @@ def display_cutoff_Analysis():
             plt.tight_layout()
 
             st.pyplot(fig)
+
+        # Display filters below the chart, formatted as a vertical list
+        st.write("### Active Filters:")
+        if active_filters:
+            st.markdown("\n".join([f"- **{filter}**" for filter in active_filters]))
+        else:
+            st.write("No filters applied")
+
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
