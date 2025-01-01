@@ -139,7 +139,8 @@ def display_cutoff_Analysis():
         # Scatter plot customization
         st.write("### Customize Scatter Plot")
         y_axis_column = st.selectbox("Select Y-Axis:", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Course'))
-        hue_column = st.selectbox("Select Hue:", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Alloted Category'))
+        hue_column = st.selectbox("Select Hue (Color):", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Alloted Category'))
+        style_column = st.selectbox("Select Style (Shape):", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Allotted Quota'))
 
         # Function to wrap long strings
         def wrap_labels(labels, width=20):
@@ -171,11 +172,12 @@ def display_cutoff_Analysis():
                 x='NEET AIR', 
                 y=y_axis_column, 
                 hue=hue_column, 
+                style=style_column,  # Add style for shapes
                 ax=ax
             )
 
             ax.set_title(
-                f'Filtered Comparison: NEET AIR vs {y_axis_column}',
+                f'Filtered Comparison: NEET AIR vs {y_axis_column}\n' + filter_description,
                 fontsize=14, loc='center'
             )
             ax.set_xlabel('NEET AIR', fontsize=14)
