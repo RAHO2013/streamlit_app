@@ -152,10 +152,11 @@ def display_unique_tables(merged_data):
         first_occurrence = merged_data.loc[merged_data.groupby('State')['Student Order'].idxmin()]
         unique_state_table = unique_state_table.merge(
             first_occurrence[['State', 'Student Order']], on='State', how='left'
-        ).rename(columns={'Student Order': 'First Student Order'})
+        )
 
-        unique_state_table = unique_state_table.sort_values(by='First Student Order').reset_index(drop=True)
+        unique_state_table = unique_state_table.sort_values(by='Student Order').reset_index(drop=True)
         unique_state_table.insert(0, 'Order', range(1, len(unique_state_table) + 1))
+        unique_state_table.drop(columns=['Student Order'], inplace=True)
         st.dataframe(unique_state_table)
 
     # Unique Programs
@@ -170,10 +171,11 @@ def display_unique_tables(merged_data):
             first_occurrence[['Program_uploaded', 'TYPE_uploaded', 'Student Order']],
             on=['Program_uploaded', 'TYPE_uploaded'],
             how='left'
-        ).rename(columns={'Student Order': 'First Student Order'})
+        )
 
-        unique_program_table = unique_program_table.sort_values(by='First Student Order').reset_index(drop=True)
+        unique_program_table = unique_program_table.sort_values(by='Student Order').reset_index(drop=True)
         unique_program_table.insert(0, 'Order', range(1, len(unique_program_table) + 1))
+        unique_program_table.drop(columns=['Student Order'], inplace=True)
         st.dataframe(unique_program_table)
 
     # Unique Types
@@ -186,10 +188,11 @@ def display_unique_tables(merged_data):
         first_occurrence = merged_data.loc[merged_data.groupby('TYPE_uploaded')['Student Order'].idxmin()]
         unique_type_table = unique_type_table.merge(
             first_occurrence[['TYPE_uploaded', 'Student Order']], on='TYPE_uploaded', how='left'
-        ).rename(columns={'Student Order': 'First Student Order'})
+        )
 
-        unique_type_table = unique_type_table.sort_values(by='First Student Order').reset_index(drop=True)
+        unique_type_table = unique_type_table.sort_values(by='Student Order').reset_index(drop=True)
         unique_type_table.insert(0, 'Order', range(1, len(unique_type_table) + 1))
+        unique_type_table.drop(columns=['Student Order'], inplace=True)
         st.dataframe(unique_type_table)
 
     # Unique Course Types
@@ -203,10 +206,11 @@ def display_unique_tables(merged_data):
             first_occurrence = merged_data.loc[merged_data.groupby('COURSE TYPE')['Student Order'].idxmin()]
             unique_course_type_table = unique_course_type_table.merge(
                 first_occurrence[['COURSE TYPE', 'Student Order']], on='COURSE TYPE', how='left'
-            ).rename(columns={'Student Order': 'First Student Order'})
+            )
 
-            unique_course_type_table = unique_course_type_table.sort_values(by='First Student Order').reset_index(drop=True)
+            unique_course_type_table = unique_course_type_table.sort_values(by='Student Order').reset_index(drop=True)
             unique_course_type_table.insert(0, 'Order', range(1, len(unique_course_type_table) + 1))
+            unique_course_type_table.drop(columns=['Student Order'], inplace=True)
             st.dataframe(unique_course_type_table)
         else:
             st.warning("Column 'COURSE TYPE' not found in the merged data.")
