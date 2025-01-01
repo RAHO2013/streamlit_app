@@ -110,87 +110,45 @@ def display_cutoff_Analysis():
     # Tab 3: Comparison Analysis
     with tab3:
         st.write("### Comparison Analysis")
+        
+        # Dynamic filtering
+        filtered_data = aiqr2_data.copy()
+        filter_columns = st.multiselect("Select Columns to Filter:", options=aiqr2_data.columns)
 
-        # Horizontal positioning for dynamic filters with interdependencies
-        col1, col2, col3 = st.columns(3)
-        col4, col5, col6 = st.columns(3)
-
-        with col1:
-            compare_r1 = st.multiselect(
-                "Select R1 Remarks to Compare:",
-                options=aiqr2_data['R1 Remarks'].unique(),
-                default=None
-            )
-
-        filtered_data = aiqr2_data[aiqr2_data['R1 Remarks'].isin(compare_r1)] if compare_r1 else aiqr2_data
-
-        with col2:
-            compare_r2 = st.multiselect(
-                "Select R2 Remarks to Compare:",
-                options=filtered_data['R2 Final Remarks'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R2 Final Remarks'].isin(compare_r2)] if compare_r2 else filtered_data
-
-        with col3:
-            compare_r1_quota = st.multiselect(
-                "Select R1 Allotted Quota:",
-                options=filtered_data['R1 Allotted Quota'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R1 Allotted Quota'].isin(compare_r1_quota)] if compare_r1_quota else filtered_data
-
-        with col4:
-            compare_r1_course = st.multiselect(
-                "Select R1 Course:",
-                options=filtered_data['R1 Course'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R1 Course'].isin(compare_r1_course)] if compare_r1_course else filtered_data
-
-        with col5:
-            compare_r2_quota = st.multiselect(
-                "Select R2 Final Allotted Quota:",
-                options=filtered_data['R2 Final Allotted Quota'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R2 Final Allotted Quota'].isin(compare_r2_quota)] if compare_r2_quota else filtered_data
-
-        with col6:
-            compare_r2_course = st.multiselect(
-                "Select R2 Final Course:",
-                options=filtered_data['R2 Final Course'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R2 Final Course'].isin(compare_r2_course)] if compare_r2_course else filtered_data
-
-        compare_r2_category = st.multiselect(
-            "Select R2 Final Alloted Category:",
-            options=filtered_data['R2 Final Alloted Category'].unique(),
-            default=None
-        )
-        filtered_data = filtered_data[filtered_data['R2 Final Alloted Category'].isin(compare_r2_category)] if compare_r2_category else filtered_data
-
-        # Add AIQ Rank Slider
-        air_range = st.slider("Select AIQ Rank Range:",
-                              min_value=int(aiqr2_data['NEET AIR'].min()),
-                              max_value=int(aiqr2_data['NEET AIR'].max()),
-                              value=(int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max())))
-        filtered_data = filtered_data[(filtered_data['NEET AIR'] >= air_range[0]) & (filtered_data['NEET AIR'] <= air_range[1])]
+        for column in filter_columns:
+            if aiqr2_data[column].dtype == 'object':
+                unique_values = filtered_data[column].unique()
+                selected_values = st.multiselect(f"Filter values in {column}:", options=unique_values)
+                if selected_values:
+                    filtered_data = filtered_data[filtered_data[column].isin(selected_values)]
+            elif pd.api.types.is_numeric_dtype(aiqr2_data[column]):
+                min_val, max_val = st.slider(
+                    f"Select range for {column}:",
+                    min_value=float(filtered_data[column].min()),
+                    max_value=float(filtered_data[column].max()),
+                    value=(float(filtered_data[column].min()), float(filtered_data[column].max()))
+                )
+                filtered_data = filtered_data[(filtered_data[column] >= min_val) & (filtered_data[column] <= max_val)]
 
         # Display filtered data
-        st.write("### Filtered Comparison Results Table")
+        st.write("### Filtered Results Table")
         st.dataframe(filtered_data)
 
-        # Scatter Plot: Filtered Data
-        st.write("### Filtered Comparison Results Scatter Plot")
-        fig, ax = plt.subplots(figsize=(18, 12))
-        sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
-        ax.set_title('Filtered Comparison:\nNEET AIR vs Course Allotments', fontsize=16, loc='left')
-        ax.set_title('Dynamic Analysis', fontsize=12, loc='right')
-        ax.set_xlabel('NEET AIR', fontsize=14, labelpad=20)
-        ax.set_ylabel('Course', fontsize=14, labelpad=20)
-        st.pyplot(fig)
+        # Scatter plot for numeric analysis
+        if 'NEET AIR' in filtered_data.columns and 'R2 Final Course' in filtered_data.columns:
+            st.write("### Filtered Data Scatter Plot")
+            fig, ax = plt.subplots(figsize=(12, 8))
+            sns.scatterplot(
+                data=filtered_data, 
+                x='NEET AIR', 
+                y='R2 Final Course', 
+                hue='R2 Final Alloted Category', 
+                ax=ax
+            )
+            ax.set_title('Filtered Comparison: NEET AIR vs Course Allotments', fontsize=16)
+            ax.set_xlabel('NEET AIR', fontsize=14)
+            ax.set_ylabel('Course', fontsize=14)
+            st.pyplot(fig)
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
