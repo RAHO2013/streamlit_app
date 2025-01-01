@@ -154,7 +154,7 @@ def display_cutoff_Analysis():
         # Adjust figure height dynamically
         unique_y_values = filtered_data[y_axis_column].nunique()
         fig_height = 6 + unique_y_values * 0.3
-        fig_width = 14  # Slightly increase width for balance
+        fig_width = 18  # Slightly increase width for balance
 
         # Create scatter plot
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
