@@ -142,38 +142,44 @@ def display_cutoff_Analysis():
         hue_column = st.selectbox("Select Hue (Color):", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Alloted Category'))
         style_column = st.selectbox("Select Style (Shape):", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Allotted Quota'))
 
-        # Function to wrap long labels
+        # Function to wrap long text
         def wrap_text(text, width=40):
             return "\n".join(textwrap.wrap(text, width))
 
-        # Wrap labels and title to prevent horizontal stretching
-        wrapped_y_axis_column = wrap_text(y_axis_column)
-        wrapped_filter_description = wrap_text("; ".join(active_filters)) if active_filters else "No filters applied"
+        # Shorten Y-axis labels (abbreviate if needed)
+        filtered_data[y_axis_column] = filtered_data[y_axis_column].apply(
+            lambda x: wrap_text(str(x), width=30)
+        )
 
-        # Calculate figure height based on unique Y-axis values (to grow vertically)
+        # Shorten the chart title
+        short_filter_description = (
+            "; ".join(active_filters)[:100] + "..." if len("; ".join(active_filters)) > 100 else "; ".join(active_filters)
+        )
+
+        # Adjust figure height dynamically
         unique_y_values = filtered_data[y_axis_column].nunique()
-        fig_height = 6 + unique_y_values * 0.3  # Base height + dynamic adjustment
+        fig_height = 6 + unique_y_values * 0.3
 
-        # Create the scatter plot
+        # Create scatter plot
         fig, ax = plt.subplots(figsize=(12, fig_height))
         sns.scatterplot(
             data=filtered_data,
             x='NEET AIR',
             y=y_axis_column,
             hue=hue_column,
-            style=style_column,  # Add style for shapes
+            style=style_column,
             ax=ax
         )
 
-        # Update title and axis labels with wrapped text
+        # Update title and axis labels
         ax.set_title(
-            f"Filtered Comparison: NEET AIR vs {wrapped_y_axis_column}\n{wrapped_filter_description}",
+            f"Filtered Comparison: NEET AIR vs {wrap_text(y_axis_column, width=30)}\n{wrap_text(short_filter_description, width=60)}",
             fontsize=14, loc='center'
         )
         ax.set_xlabel('NEET AIR', fontsize=14)
-        ax.set_ylabel(wrapped_y_axis_column, fontsize=14)
+        ax.set_ylabel(y_axis_column, fontsize=14)
 
-        # Move legend outside the plot
+        # Place legend outside the chart
         ax.legend(
             title=hue_column,
             bbox_to_anchor=(1.05, 1),
@@ -181,15 +187,15 @@ def display_cutoff_Analysis():
             borderaxespad=0.
         )
 
-        # Adjust layout to avoid overlap
+        # Adjust layout for readability
         plt.tight_layout()
 
         st.pyplot(fig)
 
-        # Display filters below the chart, formatted as a vertical list
+        # Display filters below the chart
         st.write("### Active Filters:")
         if active_filters:
-            st.markdown("\n".join([f"- **{filter}**" for filter in active_filters]))
+            st.markdown("\n".join([f"- **{wrap_text(filter, 50)}**" for filter in active_filters]))
         else:
             st.write("No filters applied")
 
