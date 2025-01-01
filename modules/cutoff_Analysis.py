@@ -141,12 +141,17 @@ def display_cutoff_Analysis():
         else:
             st.write("No filters applied")
 
+        # Scatter plot customization
+        st.write("### Customize Scatter Plot")
+        y_axis_column = st.selectbox("Select Y-Axis:", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Course'))
+        hue_column = st.selectbox("Select Hue:", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Alloted Category'))
+
         # Display filtered data
         st.write("### Filtered Results Table")
         st.dataframe(filtered_data)
 
         # Scatter plot for numeric analysis
-        if 'NEET AIR' in filtered_data.columns and 'R2 Final Course' in filtered_data.columns:
+        if 'NEET AIR' in filtered_data.columns and y_axis_column in filtered_data.columns:
             st.write("### Filtered Data Scatter Plot")
 
             # Create a descriptive title to show filters applied
@@ -157,21 +162,21 @@ def display_cutoff_Analysis():
             sns.scatterplot(
                 data=filtered_data, 
                 x='NEET AIR', 
-                y='R2 Final Course', 
-                hue='R2 Final Alloted Category', 
+                y=y_axis_column, 
+                hue=hue_column, 
                 ax=ax
             )
 
             ax.set_title(
-                'Filtered Comparison: NEET AIR vs Course Allotments\n' + filter_description,
+                f'Filtered Comparison: NEET AIR vs {y_axis_column}\n' + filter_description,
                 fontsize=14, loc='center'
             )
             ax.set_xlabel('NEET AIR', fontsize=14)
-            ax.set_ylabel('Course', fontsize=14)
+            ax.set_ylabel(y_axis_column, fontsize=14)
 
             # Move legend outside the plot
             ax.legend(
-                title='R2 Final Alloted Category', 
+                title=hue_column, 
                 bbox_to_anchor=(1.05, 1), 
                 loc='upper left', 
                 borderaxespad=0.
