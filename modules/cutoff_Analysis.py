@@ -193,58 +193,93 @@ def display_cutoff_Analysis():
     # Tab 4: Advanced Analytics
     with tab4:
         st.write("### Advanced Analytics")
+
+        # Select columns dynamically
+        st.write("#### Column Selection")
+        all_columns = aiqr2_data.columns.tolist()
         
+        # Select numeric columns for analysis
+        numeric_columns = aiqr2_data.select_dtypes(include=['number']).columns.tolist()
+        selected_numeric_columns = st.multiselect("Select Numerical Columns for Analysis:", numeric_columns, default=numeric_columns)
+
+        # Select columns for filtering
+        selected_filter_columns = st.multiselect("Select Columns to Filter By:", all_columns)
+        
+        # Dynamic filters for each selected column
+        filter_conditions = {}
+        for col in selected_filter_columns:
+            unique_values = aiqr2_data[col].dropna().unique()
+            selected_values = st.multiselect(f"Filter values for {col}:", unique_values, default=unique_values)
+            filter_conditions[col] = selected_values
+
+        # Apply filters to the data
+        filtered_data = aiqr2_data.copy()
+        for col, values in filter_conditions.items():
+            filtered_data = filtered_data[filtered_data[col].isin(values)]
+
+        # Display filtered data
+        st.write("### Filtered Data")
+        st.dataframe(filtered_data)
+
         # Statistical Summary
         st.write("#### Statistical Summary")
-        numerical_columns = ['NEET AIR']
-        stats_summary = aiqr2_data[numerical_columns].describe().T
-        st.dataframe(stats_summary)
+        if selected_numeric_columns:
+            stats_summary = filtered_data[selected_numeric_columns].describe().T
+            st.dataframe(stats_summary)
 
         # Correlation Analysis
         st.write("#### Correlation Analysis")
-        corr_data = aiqr2_data[numerical_columns]
-        if len(corr_data.columns) > 1:
-            correlation_matrix = corr_data.corr()
+        if len(selected_numeric_columns) > 1:
+            correlation_matrix = filtered_data[selected_numeric_columns].corr()
             fig, ax = plt.subplots(figsize=(10, 6))
             sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
             ax.set_title("Correlation Matrix", fontsize=16)
             st.pyplot(fig)
         else:
             st.write("Not enough numerical columns for correlation analysis.")
-        
+
         # Clustering Analysis
         st.write("#### Clustering Analysis (K-Means)")
-        clustering_data = aiqr2_data.dropna(subset=['NEET AIR'])[['NEET AIR']]
-        scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(clustering_data)
-        
-        num_clusters = st.slider("Select Number of Clusters for K-Means:", min_value=2, max_value=10, value=3)
-        kmeans = KMeans(n_clusters=num_clusters, random_state=42)
-        aiqr2_data['Cluster'] = kmeans.fit_predict(scaled_data)
-        
-        st.write("### Clustered Data Visualization")
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(
-            data=aiqr2_data,
-            x='NEET AIR',
-            y='R2 Final Course',
-            hue='Cluster',
-            palette='tab10',
-            ax=ax
-        )
-        ax.set_title(f"K-Means Clustering with {num_clusters} Clusters", fontsize=16)
-        ax.set_xlabel("NEET AIR", fontsize=14)
-        ax.set_ylabel("Course", fontsize=14)
-        st.pyplot(fig)
-        
-        st.write("#### Export Clustered Data")
-        export_clustered_data = aiqr2_data.to_csv(index=False)
-        st.download_button(
-            label="Download Clustered Data as CSV",
-            data=export_clustered_data,
-            file_name="clustered_data.csv",
-            mime="text/csv"
-        )
+        if selected_numeric_columns:
+            clustering_data = filtered_data[selected_numeric_columns].dropna()
+            scaler = StandardScaler()
+            scaled_data = scaler.fit_transform(clustering_data)
+            
+            num_clusters = st.slider("Select Number of Clusters for K-Means:", min_value=2, max_value=10, value=3)
+            kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+            filtered_data['Cluster'] = kmeans.fit_predict(scaled_data)
+            
+            # Visualize Clusters
+            st.write("### Clustered Data Visualization")
+            if len(selected_numeric_columns) >= 2:
+                x_axis = st.selectbox("Select X-axis for Cluster Plot:", selected_numeric_columns)
+                y_axis = st.selectbox("Select Y-axis for Cluster Plot:", selected_numeric_columns)
+                
+                fig, ax = plt.subplots(figsize=(10, 6))
+                sns.scatterplot(
+                    data=filtered_data,
+                    x=x_axis,
+                    y=y_axis,
+                    hue='Cluster',
+                    palette='tab10',
+                    ax=ax
+                )
+                ax.set_title(f"K-Means Clustering ({num_clusters} Clusters)", fontsize=16)
+                ax.set_xlabel(x_axis, fontsize=14)
+                ax.set_ylabel(y_axis, fontsize=14)
+                st.pyplot(fig)
+            else:
+                st.write("Not enough numerical columns for clustering visualization.")
+            
+            # Download Clustered Data
+            st.write("#### Export Clustered Data")
+            export_clustered_data = filtered_data.to_csv(index=False)
+            st.download_button(
+                label="Download Clustered Data as CSV",
+                data=export_clustered_data,
+                file_name="clustered_data.csv",
+                mime="text/csv"
+            )
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
