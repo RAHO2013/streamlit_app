@@ -186,6 +186,11 @@ def display_fee_cutoff_data(merged_data):
     fee_cutoff_table['Fees'] = pd.to_numeric(fee_cutoff_table['Fees'], errors='coerce')
     fee_cutoff_table.index = range(1, len(fee_cutoff_table) + 1)
 
+    # Add word column based on Fees
+    fee_cutoff_table['Fee Category'] = fee_cutoff_table['Fees'].apply(
+        lambda x: 'Low' if x < 50000 else 'Medium' if x < 100000 else 'High'
+    )
+
     selected_column = st.selectbox(
         "Select Fee or Cutoff to Display:",
         options=['OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'],
@@ -193,7 +198,7 @@ def display_fee_cutoff_data(merged_data):
     )
 
     filtered_fee_cutoff_table = fee_cutoff_table[[
-        'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', selected_column
+        'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', 'Fee Category', selected_column
     ]].rename(columns={
         'College Name_master': 'College Name',
         'Program_uploaded': 'Program',
