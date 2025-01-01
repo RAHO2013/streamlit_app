@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 def display_cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
@@ -39,10 +41,11 @@ def display_cutoff_Analysis():
     aiqr2_data['R1 Remarks'] = aiqr2_data['R1 Remarks'].replace('-', 'R1 Not Allotted')
 
     # Tabs for analysis
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "Course and Category Analysis",
         "Remarks Analysis",
-        "Comparison Analysis"
+        "Comparison Analysis",
+        "Advanced Analytics"
     ])
 
     # Tab 1: Course and Category Analysis
@@ -111,7 +114,6 @@ def display_cutoff_Analysis():
     with tab3:
         st.write("### Comparison Analysis")
 
-        # Horizontal positioning for dynamic filters with interdependencies
         col1, col2, col3 = st.columns(3)
         col4, col5, col6 = st.columns(3)
 
@@ -171,26 +173,78 @@ def display_cutoff_Analysis():
         )
         filtered_data = filtered_data[filtered_data['R2 Final Alloted Category'].isin(compare_r2_category)] if compare_r2_category else filtered_data
 
-        # Add AIQ Rank Slider
         air_range = st.slider("Select AIQ Rank Range:",
                               min_value=int(aiqr2_data['NEET AIR'].min()),
                               max_value=int(aiqr2_data['NEET AIR'].max()),
                               value=(int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max())))
         filtered_data = filtered_data[(filtered_data['NEET AIR'] >= air_range[0]) & (filtered_data['NEET AIR'] <= air_range[1])]
 
-        # Display filtered data
         st.write("### Filtered Comparison Results Table")
         st.dataframe(filtered_data)
 
-        # Scatter Plot: Filtered Data
         st.write("### Filtered Comparison Results Scatter Plot")
         fig, ax = plt.subplots(figsize=(18, 12))
         sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
-        ax.set_title('Filtered Comparison:\nNEET AIR vs Course Allotments', fontsize=16, loc='left')
-        ax.set_title('Dynamic Analysis', fontsize=12, loc='right')
-        ax.set_xlabel('NEET AIR', fontsize=14, labelpad=20)
-        ax.set_ylabel('Course', fontsize=14, labelpad=20)
+        ax.set_title('Filtered Comparison: NEET AIR vs Course Allotments', fontsize=16)
+        ax.set_xlabel('NEET AIR', fontsize=14)
+        ax.set_ylabel('Course', fontsize=14)
         st.pyplot(fig)
+
+    # Tab 4: Advanced Analytics
+    with tab4:
+        st.write("### Advanced Analytics")
+        
+        # Statistical Summary
+        st.write("#### Statistical Summary")
+        numerical_columns = ['NEET AIR']
+        stats_summary = aiqr2_data[numerical_columns].describe().T
+        st.dataframe(stats_summary)
+
+        # Correlation Analysis
+        st.write("#### Correlation Analysis")
+        corr_data = aiqr2_data[numerical_columns]
+        if len(corr_data.columns) > 1:
+            correlation_matrix = corr_data.corr()
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
+            ax.set_title("Correlation Matrix", fontsize=16)
+            st.pyplot(fig)
+        else:
+            st.write("Not enough numerical columns for correlation analysis.")
+        
+        # Clustering Analysis
+        st.write("#### Clustering Analysis (K-Means)")
+        clustering_data = aiqr2_data.dropna(subset=['NEET AIR'])[['NEET AIR']]
+        scaler = StandardScaler()
+        scaled_data = scaler.fit_transform(clustering_data)
+        
+        num_clusters = st.slider("Select Number of Clusters for K-Means:", min_value=2, max_value=10, value=3)
+        kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+        aiqr2_data['Cluster'] = kmeans.fit_predict(scaled_data)
+        
+        st.write("### Clustered Data Visualization")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.scatterplot(
+            data=aiqr2_data,
+            x='NEET AIR',
+            y='R2 Final Course',
+            hue='Cluster',
+            palette='tab10',
+            ax=ax
+        )
+        ax.set_title(f"K-Means Clustering with {num_clusters} Clusters", fontsize=16)
+        ax.set_xlabel("NEET AIR", fontsize=14)
+        ax.set_ylabel("Course", fontsize=14)
+        st.pyplot(fig)
+        
+        st.write("#### Export Clustered Data")
+        export_clustered_data = aiqr2_data.to_csv(index=False)
+        st.download_button(
+            label="Download Clustered Data as CSV",
+            data=export_clustered_data,
+            file_name="clustered_data.csv",
+            mime="text/csv"
+        )
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
