@@ -141,6 +141,8 @@ def display_validation(comparison_sheet, master_sheet, merged_data):
 
 def display_unique_tables(merged_data):
     st.write("### Unique Tables")
+
+    # Unique States
     with st.expander("Unique States"):
         unique_state_table = merged_data.groupby('State').agg(
             Options_Filled=('MAIN CODE', 'count')
@@ -148,6 +150,7 @@ def display_unique_tables(merged_data):
         unique_state_table.index = range(1, len(unique_state_table) + 1)
         st.dataframe(unique_state_table)
 
+    # Unique Programs
     with st.expander("Unique Programs"):
         unique_program_table = merged_data.groupby(['Program_uploaded', 'TYPE_uploaded']).agg(
             Options_Filled=('MAIN CODE', 'count')
@@ -155,12 +158,24 @@ def display_unique_tables(merged_data):
         unique_program_table.index = range(1, len(unique_program_table) + 1)
         st.dataframe(unique_program_table)
 
+    # Unique Types
     with st.expander("Unique Types"):
         unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
         unique_type_table.index = range(1, len(unique_type_table) + 1)
         st.dataframe(unique_type_table)
+
+    # Unique Course Types
+    with st.expander("Unique Course Types"):
+        if 'COURSE TYPE' in merged_data.columns:
+            unique_course_type_table = merged_data.groupby('COURSE TYPE').agg(
+                Options_Filled=('MAIN CODE', 'count')
+            ).reset_index()
+            unique_course_type_table.index = range(1, len(unique_course_type_table) + 1)
+            st.dataframe(unique_course_type_table)
+        else:
+            st.warning("Column 'COURSE TYPE' not found in the merged data.")
 
 def display_fee_cutoff_data(merged_data):
     st.write("### Fee and Cutoff Data")
