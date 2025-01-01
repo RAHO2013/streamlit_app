@@ -40,10 +40,11 @@ def display_cutoff_Analysis():
     aiqr2_data['R1 Remarks'] = aiqr2_data['R1 Remarks'].replace('-', 'R1 Not Allotted')
 
     # Tabs for analysis
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "Course and Category Analysis",
         "Remarks Analysis",
-        "Comparison Analysis"
+        "Comparison Analysis",
+        "Scatter Plot"
     ])
 
     # Tab 1: Course and Category Analysis
@@ -112,28 +113,107 @@ def display_cutoff_Analysis():
     with tab3:
         st.write("### Comparison Analysis")
 
-        # Select columns dynamically for filters
-        st.write("#### Select Columns to Filter and Analyze")
-        all_columns = aiqr2_data.columns.tolist()
-        selected_filter_columns = st.multiselect("Select Columns to Filter By:", all_columns)
+        # Create 3-by-row layout for filters
+        col1, col2, col3 = st.columns(3)
+        col4, col5, col6 = st.columns(3)
+        col7, col8, col9 = st.columns(3)
 
-        # Apply filters dynamically
         filtered_data = aiqr2_data.copy()
-        for col in selected_filter_columns:
-            unique_values = aiqr2_data[col].dropna().unique()
-            selected_values = st.multiselect(f"Select values for {col}:", unique_values, default=unique_values)
-            filtered_data = filtered_data[filtered_data[col].isin(selected_values)]
+
+        with col1:
+            compare_r1 = st.multiselect(
+                "Select R1 Remarks:",
+                options=aiqr2_data['R1 Remarks'].unique(),
+                default=None
+            )
+            if compare_r1:
+                filtered_data = filtered_data[filtered_data['R1 Remarks'].isin(compare_r1)]
+
+        with col2:
+            compare_r2 = st.multiselect(
+                "Select R2 Remarks:",
+                options=aiqr2_data['R2 Final Remarks'].unique(),
+                default=None
+            )
+            if compare_r2:
+                filtered_data = filtered_data[filtered_data['R2 Final Remarks'].isin(compare_r2)]
+
+        with col3:
+            compare_r1_quota = st.multiselect(
+                "Select R1 Quota:",
+                options=aiqr2_data['R1 Allotted Quota'].unique(),
+                default=None
+            )
+            if compare_r1_quota:
+                filtered_data = filtered_data[filtered_data['R1 Allotted Quota'].isin(compare_r1_quota)]
+
+        with col4:
+            compare_r1_course = st.multiselect(
+                "Select R1 Course:",
+                options=aiqr2_data['R1 Course'].unique(),
+                default=None
+            )
+            if compare_r1_course:
+                filtered_data = filtered_data[filtered_data['R1 Course'].isin(compare_r1_course)]
+
+        with col5:
+            compare_r2_quota = st.multiselect(
+                "Select R2 Quota:",
+                options=aiqr2_data['R2 Final Allotted Quota'].unique(),
+                default=None
+            )
+            if compare_r2_quota:
+                filtered_data = filtered_data[filtered_data['R2 Final Allotted Quota'].isin(compare_r2_quota)]
+
+        with col6:
+            compare_r2_course = st.multiselect(
+                "Select R2 Course:",
+                options=aiqr2_data['R2 Final Course'].unique(),
+                default=None
+            )
+            if compare_r2_course:
+                filtered_data = filtered_data[filtered_data['R2 Final Course'].isin(compare_r2_course)]
+
+        with col7:
+            compare_r2_category = st.multiselect(
+                "Select R2 Category:",
+                options=aiqr2_data['R2 Final Alloted Category'].unique(),
+                default=None
+            )
+            if compare_r2_category:
+                filtered_data = filtered_data[filtered_data['R2 Final Alloted Category'].isin(compare_r2_category)]
+
+        with col8:
+            compare_state = st.multiselect(
+                "Select State:",
+                options=aiqr2_data['State'].unique() if 'State' in aiqr2_data.columns else [],
+                default=None
+            )
+            if compare_state:
+                filtered_data = filtered_data[filtered_data['State'].isin(compare_state)]
+
+        with col9:
+            air_range = st.slider(
+                "Select AIR Range:",
+                min_value=int(aiqr2_data['NEET AIR'].min()),
+                max_value=int(aiqr2_data['NEET AIR'].max()),
+                value=(int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max()))
+            )
+            filtered_data = filtered_data[(filtered_data['NEET AIR'] >= air_range[0]) & (filtered_data['NEET AIR'] <= air_range[1])]
 
         # Display filtered data
         st.write("### Filtered Data")
         st.dataframe(filtered_data)
 
-        # Scatter Plot Customization
-        st.write("#### Customize Scatter Plot")
-        numeric_columns = aiqr2_data.select_dtypes(include=['number']).columns.tolist()
-        scatter_x = st.selectbox("Select X-axis for Scatter Plot:", numeric_columns)
-        scatter_y = st.selectbox("Select Y-axis for Scatter Plot:", numeric_columns)
-        scatter_hue = st.selectbox("Select Column for Hue (Optional):", all_columns, index=all_columns.index('R2 Final Alloted Category'))
+    # Tab 4: Scatter Plot
+    with tab4:
+        st.write("### Scatter Plot")
+
+        # Allow user to select columns for scatter plot
+        all_columns = aiqr2_data.columns.tolist()
+        scatter_x = st.selectbox("Select X-axis:", all_columns)
+        scatter_y = st.selectbox("Select Y-axis:", all_columns)
+        scatter_hue = st.selectbox("Select Hue (Optional):", [None] + all_columns)
 
         # Scatter Plot
         st.write("### Scatter Plot")
@@ -142,7 +222,7 @@ def display_cutoff_Analysis():
             data=filtered_data,
             x=scatter_x,
             y=scatter_y,
-            hue=scatter_hue,
+            hue=scatter_hue if scatter_hue else None,
             ax=ax
         )
         ax.set_title(f"Scatter Plot: {scatter_x} vs {scatter_y}", fontsize=16)
