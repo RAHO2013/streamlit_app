@@ -115,12 +115,15 @@ def display_cutoff_Analysis():
         filtered_data = aiqr2_data.copy()
         filter_columns = st.multiselect("Select Columns to Filter:", options=aiqr2_data.columns)
 
+        # Display active filters
+        active_filters = []
         for column in filter_columns:
             if aiqr2_data[column].dtype == 'object':
                 unique_values = filtered_data[column].unique()
                 selected_values = st.multiselect(f"Filter values in {column}:", options=unique_values)
                 if selected_values:
                     filtered_data = filtered_data[filtered_data[column].isin(selected_values)]
+                    active_filters.append(f"{column}: {', '.join(map(str, selected_values))}")
             elif pd.api.types.is_numeric_dtype(aiqr2_data[column]):
                 min_val, max_val = st.slider(
                     f"Select range for {column}:",
@@ -129,6 +132,14 @@ def display_cutoff_Analysis():
                     value=(float(filtered_data[column].min()), float(filtered_data[column].max()))
                 )
                 filtered_data = filtered_data[(filtered_data[column] >= min_val) & (filtered_data[column] <= max_val)]
+                active_filters.append(f"{column}: {min_val} to {max_val}")
+
+        # Display active filters in UI
+        st.write("### Active Filters:")
+        if active_filters:
+            st.write("; ".join(active_filters))
+        else:
+            st.write("No filters applied")
 
         # Display filtered data
         st.write("### Filtered Results Table")
@@ -137,6 +148,11 @@ def display_cutoff_Analysis():
         # Scatter plot for numeric analysis
         if 'NEET AIR' in filtered_data.columns and 'R2 Final Course' in filtered_data.columns:
             st.write("### Filtered Data Scatter Plot")
+
+            # Create a descriptive title to show filters applied
+            filter_description = "; ".join(active_filters) if active_filters else "No filters applied"
+
+            # Create the scatter plot
             fig, ax = plt.subplots(figsize=(12, 8))
             sns.scatterplot(
                 data=filtered_data, 
@@ -145,9 +161,22 @@ def display_cutoff_Analysis():
                 hue='R2 Final Alloted Category', 
                 ax=ax
             )
-            ax.set_title('Filtered Comparison: NEET AIR vs Course Allotments', fontsize=16)
+
+            ax.set_title(
+                'Filtered Comparison: NEET AIR vs Course Allotments\n' + filter_description,
+                fontsize=14, loc='center'
+            )
             ax.set_xlabel('NEET AIR', fontsize=14)
             ax.set_ylabel('Course', fontsize=14)
+
+            # Move legend outside the plot
+            ax.legend(
+                title='R2 Final Alloted Category', 
+                bbox_to_anchor=(1.05, 1), 
+                loc='upper left', 
+                borderaxespad=0.
+            )
+
             st.pyplot(fig)
 
 # Call the function to display the dashboard
