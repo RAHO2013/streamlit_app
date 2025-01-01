@@ -44,7 +44,7 @@ def display_cutoff_Analysis():
         "Course and Category Analysis",
         "Remarks Analysis",
         "Comparison Analysis",
-        "Scatter Plot Dashboard"
+        "Scatter Plot"
     ])
 
     # Tab 1: Course and Category Analysis
@@ -149,7 +149,7 @@ def display_cutoff_Analysis():
         st.write("### Filtered Data")
         st.dataframe(filtered_data)
 
-    # Tab 4: Scatter Plot Dashboard
+    # Tab 4: Scatter Plot
     with tab4:
         st.write("### Scatter Plot Dashboard")
 
