@@ -54,7 +54,7 @@ def display_comparison():
                 "Merged Data",
                 "State, Program, Type with Student Orders",
                 "Validation",
-                "Opted Tables",
+                "Unique Tables",
                 "Fee and Cutoff Data"
             ])
 
@@ -68,7 +68,7 @@ def display_comparison():
                 display_validation(comparison_sheet, master_sheet, merged_data)
 
             with tab4:
-                display_opted_tables(merged_data)
+                display_unique_tables(merged_data)
 
             with tab5:
                 display_fee_cutoff_data(merged_data)
@@ -86,7 +86,7 @@ def display_merged_data(merged_data):
 def display_summary_table(merged_data):
     st.write("### State, Program, Type with Student Orders")
     summary_table = merged_data.groupby(['State', 'Program_uploaded', 'Quota_uploaded']).agg(
-        Opted_Filled=('MAIN CODE', 'count'),
+        Options_Filled=('MAIN CODE', 'count'),
         Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
     ).reset_index()
 
@@ -139,73 +139,135 @@ def display_validation(comparison_sheet, master_sheet, merged_data):
         else:
             st.success("No missing values found in the merged data!")
 
-def display_opted_tables(merged_data):
-    st.write("### Opted Tables")
-    col1, col2 = st.columns(2)
+def display_unique_tables(merged_data):
+    st.write("### Unique Tables")
 
-    # Opted States
-    with col1:
-        st.subheader("Opted States")
-        opted_state_table = merged_data.groupby('State').agg(
-            Opted_Filled=('MAIN CODE', 'count')
+    # Unique States
+    with st.expander("Unique States"):
+        unique_state_table = merged_data.groupby('State').agg(
+            Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
 
+        # Add first occurrence based on Student Order
         first_occurrence = merged_data.loc[merged_data.groupby('State')['Student Order'].idxmin()]
-        opted_state_table = opted_state_table.merge(
+        unique_state_table = unique_state_table.merge(
             first_occurrence[['State', 'Student Order']], on='State', how='left'
         )
 
-        opted_state_table = opted_state_table.sort_values(by='Student Order').reset_index(drop=True)
-        opted_state_table.insert(0, 'Order', range(1, len(opted_state_table) + 1))
-        opted_state_table.drop(columns=['Student Order'], inplace=True)
-        opted_state_table.index = range(1, len(opted_state_table) + 1)
-        st.dataframe(opted_state_table)
+        unique_state_table = unique_state_table.sort_values(by='Student Order').reset_index(drop=True)
+        unique_state_table.insert(0, 'Order', range(1, len(unique_state_table) + 1))
+        unique_state_table.drop(columns=['Student Order'], inplace=True)
+        unique_state_table.index = range(1, len(unique_state_table) + 1)
+        st.dataframe(unique_state_table)
 
-    # Opted Programs
-    with col2:
-        st.subheader("Opted Programs")
-        opted_program_table = merged_data.groupby(['Program_uploaded', 'TYPE_uploaded']).agg(
-            Opted_Filled=('MAIN CODE', 'count')
+    # Unique Programs
+    with st.expander("Unique Programs"):
+        unique_program_table = merged_data.groupby(['Program_uploaded', 'TYPE_uploaded']).agg(
+            Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
 
+        # Add first occurrence based on Student Order
         first_occurrence = merged_data.loc[merged_data.groupby(['Program_uploaded', 'TYPE_uploaded'])['Student Order'].idxmin()]
-        opted_program_table = opted_program_table.merge(
+        unique_program_table = unique_program_table.merge(
             first_occurrence[['Program_uploaded', 'TYPE_uploaded', 'Student Order']],
             on=['Program_uploaded', 'TYPE_uploaded'],
             how='left'
         )
 
-        opted_program_table = opted_program_table.sort_values(by='Student Order').reset_index(drop=True)
-        opted_program_table.insert(0, 'Order', range(1, len(opted_program_table) + 1))
-        opted_program_table.drop(columns=['Student Order'], inplace=True)
-        opted_program_table.index = range(1, len(opted_program_table) + 1)
-        st.dataframe(opted_program_table)
+        unique_program_table = unique_program_table.sort_values(by='Student Order').reset_index(drop=True)
+        unique_program_table.insert(0, 'Order', range(1, len(unique_program_table) + 1))
+        unique_program_table.drop(columns=['Student Order'], inplace=True)
+        unique_program_table.index = range(1, len(unique_program_table) + 1)
+        st.dataframe(unique_program_table)
 
-    # Opted Types
-    with col1:
-        st.subheader("Opted Types")
-        opted_type_table = merged_data.groupby('TYPE_uploaded').agg(
-            Opted_Filled=('MAIN CODE', 'count')
+    # Unique Types
+    with st.expander("Unique Types"):
+        unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
+            Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
 
+        # Add first occurrence based on Student Order
         first_occurrence = merged_data.loc[merged_data.groupby('TYPE_uploaded')['Student Order'].idxmin()]
-        opted_type_table = opted_type_table.merge(
+        unique_type_table = unique_type_table.merge(
             first_occurrence[['TYPE_uploaded', 'Student Order']], on='TYPE_uploaded', how='left'
         )
 
-        opted_type_table = opted_type_table.sort_values(by='Student Order').reset_index(drop=True)
-        opted_type_table.insert(0, 'Order', range(1, len(opted_type_table) + 1))
-        opted_type_table.drop(columns=['Student Order'], inplace=True)
-        opted_type_table.index = range(1, len(opted_type_table) + 1)
-        st.dataframe(opted_type_table)
+        unique_type_table = unique_type_table.sort_values(by='Student Order').reset_index(drop=True)
+        unique_type_table.insert(0, 'Order', range(1, len(unique_type_table) + 1))
+        unique_type_table.drop(columns=['Student Order'], inplace=True)
+        unique_type_table.index = range(1, len(unique_type_table) + 1)
+        st.dataframe(unique_type_table)
 
-    # Opted Course Types
-    with col2:
-        st.subheader("Opted Course Types")
+    # Unique Course Types
+    with st.expander("Unique Course Types"):
         if 'COURSE TYPE' in merged_data.columns:
-            opted_course_type_table = merged_data.groupby('COURSE TYPE').agg(
-                Opted_Filled=('MAIN CODE', 'count')
+            unique_course_type_table = merged_data.groupby('COURSE TYPE').agg(
+                Options_Filled=('MAIN CODE', 'count')
             ).reset_index()
 
+            # Add first occurrence based on Student Order
             first_occurrence = merged_data.loc[merged_data.groupby('COURSE TYPE')['Student Order'].idxmin()]
-            opted_course_type_table = opted_course_type_table.merge(
+            unique_course_type_table = unique_course_type_table.merge(
+                first_occurrence[['COURSE TYPE', 'Student Order']], on='COURSE TYPE', how='left'
+            )
+
+            unique_course_type_table = unique_course_type_table.sort_values(by='Student Order').reset_index(drop=True)
+            unique_course_type_table.insert(0, 'Order', range(1, len(unique_course_type_table) + 1))
+            unique_course_type_table.drop(columns=['Student Order'], inplace=True)
+            unique_course_type_table.index = range(1, len(unique_course_type_table) + 1)
+            st.dataframe(unique_course_type_table)
+        else:
+            st.warning("Column 'COURSE TYPE' not found in the merged data.")
+
+def display_fee_cutoff_data(merged_data):
+    st.write("### Fee and Cutoff Data")
+    fee_cutoff_table = merged_data[[
+        'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'
+    ]].dropna(how='all').reset_index(drop=True)
+
+    fee_cutoff_table['Fees'] = pd.to_numeric(fee_cutoff_table['Fees'], errors='coerce')
+    fee_cutoff_table.index = range(1, len(fee_cutoff_table) + 1)
+
+    # Add word column based on Fees
+    fee_cutoff_table['Fee Category'] = fee_cutoff_table['Fees'].apply(
+        lambda x: 'Low' if x < 500000 else 'Medium' if x < 2500000 else 'High' if x < 5000000 else 'Very High' if x < 7400000 else 'Extreme High'
+    )
+
+    selected_column = st.selectbox(
+        "Select Fee or Cutoff to Display:",
+        options=['OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'],
+        index=0
+    )
+
+    filtered_fee_cutoff_table = fee_cutoff_table[[
+        'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', 'Fee Category', selected_column
+    ]].rename(columns={
+        'College Name_master': 'College Name',
+        'Program_uploaded': 'Program',
+        'TYPE_uploaded': 'Type'
+    })
+
+    filtered_fee_cutoff_table = filtered_fee_cutoff_table.sort_values(by=['Fees', 'Student Order'], ascending=True, na_position='last')
+    filtered_fee_cutoff_table.index = range(1, len(filtered_fee_cutoff_table) + 1)
+
+    st.dataframe(filtered_fee_cutoff_table.style.format({
+        'Fees': "{:.0f}",
+        'Student Order': "{:.0f}",
+        selected_column: "{:.0f}" if selected_column != 'SERVICE YEARS' else "{}"
+    }))
+
+def split_ranges(lst):
+    if not lst:
+        return ""
+    ranges = []
+    start = lst[0]
+    for i in range(1, len(lst)):
+        if lst[i] != lst[i - 1] + 1:
+            end = lst[i - 1]
+            ranges.append(f"{start}-{end}" if start != end else f"{start}")
+            start = lst[i]
+    ranges.append(f"{start}-{lst[-1]}" if start != lst[-1] else f"{start}")
+    return ", ".join(ranges)
+
+# Call the function to display the dashboard
+display_comparison()
