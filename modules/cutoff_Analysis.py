@@ -154,7 +154,7 @@ def display_cutoff_Analysis():
         # Adjust figure height dynamically
         unique_y_values = filtered_data[y_axis_column].nunique()
         fig_height = 6 + unique_y_values * 0.3
-        fig_width = 18  # Slightly increase width for balance
+        fig_width = 14  # Slightly increase width for balance
 
         # Create scatter plot
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
@@ -169,6 +169,16 @@ def display_cutoff_Analysis():
 
         # Add gridlines to improve readability
         ax.grid(visible=True, which='both', axis='x', linestyle='--', linewidth=0.7)
+
+        # Dynamically adjust the X-axis tick frequency
+        x_min = filtered_data['NEET AIR'].min()
+        x_max = filtered_data['NEET AIR'].max()
+        x_range = x_max - x_min
+        tick_interval = x_range // 10  # Current tick interval
+        new_tick_interval = tick_interval // 2  # Double the tick frequency
+
+        # Set custom ticks on the X-axis
+        ax.set_xticks(range(int(x_min), int(x_max) + 1, int(new_tick_interval)))
 
         # Update title and axis labels
         ax.set_title(
