@@ -151,17 +151,13 @@ def display_cutoff_Analysis():
             lambda x: wrap_text(str(x), width=30)
         )
 
-        # Shorten the chart title
-        short_filter_description = (
-            "; ".join(active_filters)[:100] + "..." if len("; ".join(active_filters)) > 100 else "; ".join(active_filters)
-        )
-
         # Adjust figure height dynamically
         unique_y_values = filtered_data[y_axis_column].nunique()
         fig_height = 6 + unique_y_values * 0.3
+        fig_width = 14  # Slightly increase width for balance
 
         # Create scatter plot
-        fig, ax = plt.subplots(figsize=(12, fig_height))
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
         sns.scatterplot(
             data=filtered_data,
             x='NEET AIR',
@@ -171,9 +167,12 @@ def display_cutoff_Analysis():
             ax=ax
         )
 
+        # Add gridlines to improve readability
+        ax.grid(visible=True, which='both', axis='x', linestyle='--', linewidth=0.7)
+
         # Update title and axis labels
         ax.set_title(
-            f"Filtered Comparison: NEET AIR vs {wrap_text(y_axis_column, width=30)}\n{wrap_text(short_filter_description, width=60)}",
+            f"Filtered Comparison: NEET AIR vs {wrap_text(y_axis_column, width=30)}",
             fontsize=14, loc='center'
         )
         ax.set_xlabel('NEET AIR', fontsize=14)
