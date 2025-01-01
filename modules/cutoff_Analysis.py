@@ -4,7 +4,6 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
 def display_cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
 
@@ -31,8 +30,8 @@ def display_cutoff_Analysis():
 
     # Collapse AFMS-related remarks
     aiqr2_data['R2 Final Remarks'] = aiqr2_data['R2 Final Remarks'].replace(
-        to_replace=r'Fresh Allotted in 2nd Round\( AFMS Rank : \d+ \)',
-        value='Fresh Allotted in 2nd Round (AFMS)',
+        to_replace=r'Fresh Allotted in 2nd Round\( AFMS Rank : \d+ \)', 
+        value='Fresh Allotted in 2nd Round (AFMS)', 
         regex=True
     )
 
@@ -40,11 +39,10 @@ def display_cutoff_Analysis():
     aiqr2_data['R1 Remarks'] = aiqr2_data['R1 Remarks'].replace('-', 'R1 Not Allotted')
 
     # Tabs for analysis
-    tab1, tab2, tab3, tab4 = st.tabs([
+    tab1, tab2, tab3 = st.tabs([
         "Course and Category Analysis",
         "Remarks Analysis",
-        "Comparison Analysis",
-        "Scatter Plot"
+        "Comparison Analysis"
     ])
 
     # Tab 1: Course and Category Analysis
@@ -61,10 +59,10 @@ def display_cutoff_Analysis():
 
         # Create a pivot table for max NEET AIR by R2 Final Course and R2 Final Alloted Category
         pivot_table = filtered_data.pivot_table(
-            values='NEET AIR',
-            index='R2 Final Course',
-            columns='R2 Final Alloted Category',
-            aggfunc='max',
+            values='NEET AIR', 
+            index='R2 Final Course', 
+            columns='R2 Final Alloted Category', 
+            aggfunc='max', 
             fill_value=0
         )
 
@@ -113,10 +111,9 @@ def display_cutoff_Analysis():
     with tab3:
         st.write("### Comparison Analysis")
 
-        # Create filters
+        # Horizontal positioning for dynamic filters with interdependencies
         col1, col2, col3 = st.columns(3)
-
-        filtered_data = aiqr2_data.copy()
+        col4, col5, col6 = st.columns(3)
 
         with col1:
             compare_r1 = st.multiselect(
@@ -124,70 +121,76 @@ def display_cutoff_Analysis():
                 options=aiqr2_data['R1 Remarks'].unique(),
                 default=None
             )
-            if compare_r1:
-                filtered_data = filtered_data[filtered_data['R1 Remarks'].isin(compare_r1)]
+
+        filtered_data = aiqr2_data[aiqr2_data['R1 Remarks'].isin(compare_r1)] if compare_r1 else aiqr2_data
 
         with col2:
             compare_r2 = st.multiselect(
                 "Select R2 Remarks to Compare:",
-                options=aiqr2_data['R2 Final Remarks'].unique(),
+                options=filtered_data['R2 Final Remarks'].unique(),
                 default=None
             )
-            if compare_r2:
-                filtered_data = filtered_data[filtered_data['R2 Final Remarks'].isin(compare_r2)]
+            filtered_data = filtered_data[filtered_data['R2 Final Remarks'].isin(compare_r2)] if compare_r2 else filtered_data
 
         with col3:
-            air_range = st.slider(
-                "Select AIQ Rank Range:",
-                min_value=int(aiqr2_data['NEET AIR'].min()),
-                max_value=int(aiqr2_data['NEET AIR'].max()),
-                value=(int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max()))
+            compare_r1_quota = st.multiselect(
+                "Select R1 Allotted Quota:",
+                options=filtered_data['R1 Allotted Quota'].unique(),
+                default=None
             )
-            filtered_data = filtered_data[(filtered_data['NEET AIR'] >= air_range[0]) & (filtered_data['NEET AIR'] <= air_range[1])]
+            filtered_data = filtered_data[filtered_data['R1 Allotted Quota'].isin(compare_r1_quota)] if compare_r1_quota else filtered_data
+
+        with col4:
+            compare_r1_course = st.multiselect(
+                "Select R1 Course:",
+                options=filtered_data['R1 Course'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R1 Course'].isin(compare_r1_course)] if compare_r1_course else filtered_data
+
+        with col5:
+            compare_r2_quota = st.multiselect(
+                "Select R2 Final Allotted Quota:",
+                options=filtered_data['R2 Final Allotted Quota'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R2 Final Allotted Quota'].isin(compare_r2_quota)] if compare_r2_quota else filtered_data
+
+        with col6:
+            compare_r2_course = st.multiselect(
+                "Select R2 Final Course:",
+                options=filtered_data['R2 Final Course'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R2 Final Course'].isin(compare_r2_course)] if compare_r2_course else filtered_data
+
+        compare_r2_category = st.multiselect(
+            "Select R2 Final Alloted Category:",
+            options=filtered_data['R2 Final Alloted Category'].unique(),
+            default=None
+        )
+        filtered_data = filtered_data[filtered_data['R2 Final Alloted Category'].isin(compare_r2_category)] if compare_r2_category else filtered_data
+
+        # Add AIQ Rank Slider
+        air_range = st.slider("Select AIQ Rank Range:",
+                              min_value=int(aiqr2_data['NEET AIR'].min()),
+                              max_value=int(aiqr2_data['NEET AIR'].max()),
+                              value=(int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max())))
+        filtered_data = filtered_data[(filtered_data['NEET AIR'] >= air_range[0]) & (filtered_data['NEET AIR'] <= air_range[1])]
 
         # Display filtered data
-        st.write("### Filtered Data")
+        st.write("### Filtered Comparison Results Table")
         st.dataframe(filtered_data)
 
-    # Tab 4: Scatter Plot
-    with tab4:
-        st.write("### Scatter Plot Dashboard")
-
-        # Create filters
-        st.write("#### Select Filters for the Scatter Plot")
-        scatter_filters = {}
-        for column in aiqr2_data.columns:
-            unique_values = aiqr2_data[column].dropna().unique()
-            selected_values = st.multiselect(f"Filter {column}:", unique_values, default=unique_values)
-            scatter_filters[column] = selected_values
-
-        # Apply filters
-        scatter_data = aiqr2_data.copy()
-        for col, values in scatter_filters.items():
-            scatter_data = scatter_data[scatter_data[col].isin(values)]
-
-        # Scatter plot settings
-        st.write("#### Customize Scatter Plot")
-        scatter_x = st.selectbox("Select X-axis:", aiqr2_data.columns)
-        scatter_y = st.selectbox("Select Y-axis:", aiqr2_data.columns)
-        scatter_hue = st.selectbox("Select Hue (Optional):", [None] + list(aiqr2_data.columns))
-
-        # Scatter plot visualization
-        st.write("### Scatter Plot")
-        fig, ax = plt.subplots(figsize=(12, 8))
-        sns.scatterplot(
-            data=scatter_data,
-            x=scatter_x,
-            y=scatter_y,
-            hue=scatter_hue if scatter_hue else None,
-            ax=ax
-        )
-        ax.set_title(f"Scatter Plot: {scatter_x} vs {scatter_y}", fontsize=16)
-        ax.set_xlabel(scatter_x, fontsize=14)
-        ax.set_ylabel(scatter_y, fontsize=14)
-        ax.legend(loc='upper left', bbox_to_anchor=(1, 1))  # Move legend outside
+        # Scatter Plot: Filtered Data
+        st.write("### Filtered Comparison Results Scatter Plot")
+        fig, ax = plt.subplots(figsize=(18, 12))
+        sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
+        ax.set_title('Filtered Comparison:\nNEET AIR vs Course Allotments', fontsize=16, loc='left')
+        ax.set_title('Dynamic Analysis', fontsize=12, loc='right')
+        ax.set_xlabel('NEET AIR', fontsize=14, labelpad=20)
+        ax.set_ylabel('Course', fontsize=14, labelpad=20)
         st.pyplot(fig)
-
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
