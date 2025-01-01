@@ -85,7 +85,7 @@ def display_merged_data(merged_data):
 
 def display_summary_table(merged_data):
     st.write("### State, Program, Type with Student Orders")
-    summary_table = merged_data.groupby(['State', 'Program_uploaded', 'Quota_uploaded']).agg(
+    summary_table = merged_data.groupby(['State', 'Program_uploaded', 'TYPE_uploaded']).agg(
         Options_Filled=('MAIN CODE', 'count'),
         Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
     ).reset_index()
