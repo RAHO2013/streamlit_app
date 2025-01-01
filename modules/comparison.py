@@ -148,12 +148,7 @@ def display_unique_tables(merged_data):
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
         unique_state_table.index = range(1, len(unique_state_table) + 1)
-
-        # Add color coding: highlight rows with more than 10 options filled
-        styled_table = unique_state_table.style.applymap(
-            lambda x: 'background-color: lightgreen' if isinstance(x, (int, float)) and x > 10 else ''
-        )
-        st.dataframe(styled_table)
+        st.dataframe(unique_state_table)
 
     # Unique Programs
     with st.expander("Unique Programs"):
@@ -161,13 +156,7 @@ def display_unique_tables(merged_data):
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
         unique_program_table.index = range(1, len(unique_program_table) + 1)
-
-        # Color coding: alternate row colors
-        styled_table = unique_program_table.style.apply(
-            lambda x: ['background-color: #f2f2f2' if i % 2 == 0 else '' for i in range(len(x))],
-            axis=0
-        )
-        st.dataframe(styled_table)
+        st.dataframe(unique_program_table)
 
     # Unique Types
     with st.expander("Unique Types"):
@@ -175,12 +164,7 @@ def display_unique_tables(merged_data):
             Options_Filled=('MAIN CODE', 'count')
         ).reset_index()
         unique_type_table.index = range(1, len(unique_type_table) + 1)
-
-        # Highlight cells where 'Options_Filled' exceeds 20
-        styled_table = unique_type_table.style.applymap(
-            lambda x: 'background-color: yellow' if isinstance(x, (int, float)) and x > 20 else ''
-        )
-        st.dataframe(styled_table)
+        st.dataframe(unique_type_table)
 
     # Unique Course Types
     with st.expander("Unique Course Types"):
@@ -189,12 +173,7 @@ def display_unique_tables(merged_data):
                 Options_Filled=('MAIN CODE', 'count')
             ).reset_index()
             unique_course_type_table.index = range(1, len(unique_course_type_table) + 1)
-
-            # Apply red color for low counts
-            styled_table = unique_course_type_table.style.applymap(
-                lambda x: 'color: red' if isinstance(x, (int, float)) and x < 5 else ''
-            )
-            st.dataframe(styled_table)
+            st.dataframe(unique_course_type_table)
         else:
             st.warning("Column 'COURSE TYPE' not found in the merged data.")
 
