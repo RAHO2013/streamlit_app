@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
+import textwrap
+
 
 def display_cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
@@ -146,6 +148,14 @@ def display_cutoff_Analysis():
         y_axis_column = st.selectbox("Select Y-Axis:", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Course'))
         hue_column = st.selectbox("Select Hue:", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Alloted Category'))
 
+        # Function to wrap long strings
+        def wrap_labels(labels, width=20):
+            return ['\n'.join(textwrap.wrap(label, width)) for label in labels]
+
+        # Wrap Y-axis and hue labels to prevent horizontal overflow
+        filtered_data[y_axis_column] = filtered_data[y_axis_column].astype(str)
+        filtered_data[y_axis_column] = wrap_labels(filtered_data[y_axis_column])
+
         # Display filtered data
         st.write("### Filtered Results Table")
         st.dataframe(filtered_data)
@@ -157,8 +167,12 @@ def display_cutoff_Analysis():
             # Create a descriptive title to show filters applied
             filter_description = "; ".join(active_filters) if active_filters else "No filters applied"
 
+            # Calculate figure height based on unique Y-axis values (to grow vertically)
+            unique_y_values = filtered_data[y_axis_column].nunique()
+            fig_height = 6 + unique_y_values * 0.3  # Base height + dynamic adjustment
+
             # Create the scatter plot
-            fig, ax = plt.subplots(figsize=(12, 8))
+            fig, ax = plt.subplots(figsize=(12, fig_height))
             sns.scatterplot(
                 data=filtered_data, 
                 x='NEET AIR', 
@@ -181,6 +195,9 @@ def display_cutoff_Analysis():
                 loc='upper left', 
                 borderaxespad=0.
             )
+
+            # Tighten layout for better appearance
+            plt.tight_layout()
 
             st.pyplot(fig)
 
