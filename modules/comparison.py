@@ -157,6 +157,7 @@ def display_unique_tables(merged_data):
         unique_state_table = unique_state_table.sort_values(by='Student Order').reset_index(drop=True)
         unique_state_table.insert(0, 'Order', range(1, len(unique_state_table) + 1))
         unique_state_table.drop(columns=['Student Order'], inplace=True)
+        unique_state_table.index = range(1, len(unique_state_table) + 1)
         st.dataframe(unique_state_table)
 
     # Unique Programs
@@ -176,6 +177,7 @@ def display_unique_tables(merged_data):
         unique_program_table = unique_program_table.sort_values(by='Student Order').reset_index(drop=True)
         unique_program_table.insert(0, 'Order', range(1, len(unique_program_table) + 1))
         unique_program_table.drop(columns=['Student Order'], inplace=True)
+        unique_program_table.index = range(1, len(unique_program_table) + 1)
         st.dataframe(unique_program_table)
 
     # Unique Types
@@ -193,6 +195,7 @@ def display_unique_tables(merged_data):
         unique_type_table = unique_type_table.sort_values(by='Student Order').reset_index(drop=True)
         unique_type_table.insert(0, 'Order', range(1, len(unique_type_table) + 1))
         unique_type_table.drop(columns=['Student Order'], inplace=True)
+        unique_type_table.index = range(1, len(unique_type_table) + 1)
         st.dataframe(unique_type_table)
 
     # Unique Course Types
@@ -211,6 +214,7 @@ def display_unique_tables(merged_data):
             unique_course_type_table = unique_course_type_table.sort_values(by='Student Order').reset_index(drop=True)
             unique_course_type_table.insert(0, 'Order', range(1, len(unique_course_type_table) + 1))
             unique_course_type_table.drop(columns=['Student Order'], inplace=True)
+            unique_course_type_table.index = range(1, len(unique_course_type_table) + 1)
             st.dataframe(unique_course_type_table)
         else:
             st.warning("Column 'COURSE TYPE' not found in the merged data.")
@@ -226,7 +230,7 @@ def display_fee_cutoff_data(merged_data):
 
     # Add word column based on Fees
     fee_cutoff_table['Fee Category'] = fee_cutoff_table['Fees'].apply(
-        lambda x: 'Low' if x < 50000 else 'Medium' if x < 100000 else 'High'
+        lambda x: 'Low' if x < 500000 else 'Medium' if x < 2500000 else 'High' if x < 5000000 else 'Very High' if x < 7400000 else 'Extreme High'
     )
 
     selected_column = st.selectbox(
