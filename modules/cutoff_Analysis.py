@@ -142,59 +142,49 @@ def display_cutoff_Analysis():
         hue_column = st.selectbox("Select Hue (Color):", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Alloted Category'))
         style_column = st.selectbox("Select Style (Shape):", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Allotted Quota'))
 
-        # Function to wrap long strings
-        def wrap_labels(labels, width=20):
-            return ['\n'.join(textwrap.wrap(label, width)) for label in labels]
+        # Function to wrap long labels
+        def wrap_text(text, width=40):
+            return "\n".join(textwrap.wrap(text, width))
 
-        # Wrap Y-axis labels to prevent horizontal overflow
-        filtered_data[y_axis_column] = filtered_data[y_axis_column].astype(str)
-        filtered_data[y_axis_column] = wrap_labels(filtered_data[y_axis_column])
+        # Wrap labels and title to prevent horizontal stretching
+        wrapped_y_axis_column = wrap_text(y_axis_column)
+        wrapped_filter_description = wrap_text("; ".join(active_filters)) if active_filters else "No filters applied"
 
-        # Display filtered data
-        st.write("### Filtered Results Table")
-        st.dataframe(filtered_data)
+        # Calculate figure height based on unique Y-axis values (to grow vertically)
+        unique_y_values = filtered_data[y_axis_column].nunique()
+        fig_height = 6 + unique_y_values * 0.3  # Base height + dynamic adjustment
 
-        # Scatter plot for numeric analysis
-        if 'NEET AIR' in filtered_data.columns and y_axis_column in filtered_data.columns:
-            st.write("### Filtered Data Scatter Plot")
+        # Create the scatter plot
+        fig, ax = plt.subplots(figsize=(12, fig_height))
+        sns.scatterplot(
+            data=filtered_data,
+            x='NEET AIR',
+            y=y_axis_column,
+            hue=hue_column,
+            style=style_column,  # Add style for shapes
+            ax=ax
+        )
 
-            # Create a descriptive title to show filters applied
-            filter_description = "; ".join(active_filters) if active_filters else "No filters applied"
+        # Update title and axis labels with wrapped text
+        ax.set_title(
+            f"Filtered Comparison: NEET AIR vs {wrapped_y_axis_column}\n{wrapped_filter_description}",
+            fontsize=14, loc='center'
+        )
+        ax.set_xlabel('NEET AIR', fontsize=14)
+        ax.set_ylabel(wrapped_y_axis_column, fontsize=14)
 
-            # Calculate figure height based on unique Y-axis values (to grow vertically)
-            unique_y_values = filtered_data[y_axis_column].nunique()
-            fig_height = 6 + unique_y_values * 0.3  # Base height + dynamic adjustment
+        # Move legend outside the plot
+        ax.legend(
+            title=hue_column,
+            bbox_to_anchor=(1.05, 1),
+            loc='upper left',
+            borderaxespad=0.
+        )
 
-            # Create the scatter plot
-            fig, ax = plt.subplots(figsize=(12, fig_height))
-            sns.scatterplot(
-                data=filtered_data, 
-                x='NEET AIR', 
-                y=y_axis_column, 
-                hue=hue_column, 
-                style=style_column,  # Add style for shapes
-                ax=ax
-            )
+        # Adjust layout to avoid overlap
+        plt.tight_layout()
 
-            ax.set_title(
-                f'Filtered Comparison: NEET AIR vs {y_axis_column}\n' + filter_description,
-                fontsize=14, loc='center'
-            )
-            ax.set_xlabel('NEET AIR', fontsize=14)
-            ax.set_ylabel(y_axis_column, fontsize=14)
-
-            # Move legend outside the plot
-            ax.legend(
-                title=hue_column, 
-                bbox_to_anchor=(1.05, 1), 
-                loc='upper left', 
-                borderaxespad=0.
-            )
-
-            # Tighten layout for better appearance
-            plt.tight_layout()
-
-            st.pyplot(fig)
+        st.pyplot(fig)
 
         # Display filters below the chart, formatted as a vertical list
         st.write("### Active Filters:")
