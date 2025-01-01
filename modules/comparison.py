@@ -1,218 +1,211 @@
 import streamlit as st
 import pandas as pd
 import os
-import seaborn as sns
-import matplotlib.pyplot as plt
-import plotly.express as px
 
-def display_cutoff_Analysis():
-    st.title("NEET AIQ Analysis Dashboard")
+def display_comparison():
+    st.title("Order Comparison Dashboard")
 
-    # Load the AIQR2 Excel file
-    file_path = os.path.join('data', 'AIQR2.xlsx')
+    # Path to the master file
+    MASTER_FILE = os.path.join('data', 'MASTER EXCEL.xlsx')
 
-    if not os.path.exists(file_path):
-        st.error("AIQR2 file is missing in the 'data/' folder!")
+    if not os.path.exists(MASTER_FILE):
+        st.error(f"Master file '{MASTER_FILE}' is missing in the 'data/' folder!")
         return
 
-    # Load the data
-    try:
-        aiqr2_data = pd.read_excel(file_path, sheet_name='Sheet1')
-    except Exception as e:
-        st.error(f"Error loading the AIQR2 data: {e}")
-        return
+    master_sheet = pd.read_excel(MASTER_FILE, sheet_name='Sheet1', dtype=str)
 
-    # Clean and prepare data
-    aiqr2_data.fillna("-", inplace=True)
+    # File upload section
+    uploaded_file = st.file_uploader("Upload Comparison File (Excel)", type=["xlsx"])
 
-    # Ensure NEET AIR is numeric for proper sorting and calculations
-    aiqr2_data['NEET AIR'] = pd.to_numeric(aiqr2_data['NEET AIR'], errors='coerce')
-    aiqr2_data['NEET AIR'] = aiqr2_data['NEET AIR'].apply(lambda x: int(x) if pd.notnull(x) else '-')
+    if uploaded_file:
+        try:
+            comparison_sheet = pd.read_excel(uploaded_file, sheet_name='Sheet1', dtype=str)
 
-    # Collapse AFMS-related remarks
-    aiqr2_data['R2 Final Remarks'] = aiqr2_data['R2 Final Remarks'].replace(
-        to_replace=r'Fresh Allotted in 2nd Round\( AFMS Rank : \d+ \)', 
-        value='Fresh Allotted in 2nd Round (AFMS)', 
-        regex=True
+            # Rename columns in the uploaded file
+            expected_columns = [
+                "MCC College Code",
+                "College Name",
+                "COURSE CODE",
+                "Program",
+                "Quota",
+                "TYPE",
+                "Student Order"
+            ]
+
+            if len(comparison_sheet.columns) < len(expected_columns):
+                st.error("Uploaded file must have at least 7 columns.")
+                return
+
+            comparison_sheet.rename(columns=dict(zip(comparison_sheet.columns[:7], expected_columns)), inplace=True)
+
+            # Clean and process Student Order
+            comparison_sheet['Student Order'] = pd.to_numeric(comparison_sheet['Student Order'], errors='coerce')
+            comparison_sheet.sort_values(by='Student Order', inplace=True)
+
+            # Create MAIN CODE
+            comparison_sheet['MAIN CODE'] = comparison_sheet['MCC College Code'].str.strip() + "_" + comparison_sheet['COURSE CODE'].str.strip() + "_" + comparison_sheet['Quota'].str.strip()
+            master_sheet['MAIN CODE'] = master_sheet['MCC College Code'].str.strip() + "_" + master_sheet['COURSE CODE'].str.strip() + "_" + master_sheet['Quota'].str.strip()
+
+            # Merge data based on MAIN CODE
+            merged_data = pd.merge(comparison_sheet, master_sheet, on='MAIN CODE', how='left', suffixes=('_uploaded', '_master'))
+
+            # Tabs for displaying data
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
+                "Merged Data",
+                "State, Program, Type with Student Orders",
+                "Validation",
+                "Unique Tables",
+                "Fee and Cutoff Data"
+            ])
+
+            with tab1:
+                display_merged_data(merged_data)
+
+            with tab2:
+                display_summary_table(merged_data)
+
+            with tab3:
+                display_validation(comparison_sheet, master_sheet, merged_data)
+
+            with tab4:
+                display_unique_tables(merged_data)
+
+            with tab5:
+                display_fee_cutoff_data(merged_data)
+
+        except Exception as e:
+            st.error(f"An error occurred while processing the uploaded file: {e}")
+    else:
+        st.info("Please upload an Excel file for comparison.")
+
+def display_merged_data(merged_data):
+    st.write("### Merged Data")
+    merged_data.index = range(1, len(merged_data) + 1)
+    st.dataframe(merged_data)
+
+def display_summary_table(merged_data):
+    st.write("### State, Program, Type with Student Orders")
+    summary_table = merged_data.groupby(['State', 'Program_uploaded', 'Quota_uploaded']).agg(
+        Options_Filled=('MAIN CODE', 'count'),
+        Student_Order_Ranges=('Student Order', lambda x: split_ranges(sorted(x.dropna().astype(int).tolist())))
+    ).reset_index()
+
+    summary_table.insert(0, 'Student_Order_Ranges', summary_table.pop('Student_Order_Ranges'))
+    summary_table['Student_Order_From'] = summary_table['Student_Order_Ranges'].str.extract(r'^([\d]+)', expand=False).astype(float)
+    summary_table['Student_Order_To'] = summary_table['Student_Order_Ranges'].str.extract(r'([\d]+)$', expand=False).astype(float)
+    summary_table['Student_Order_To'].fillna(summary_table['Student_Order_From'], inplace=True)
+
+    summary_table = summary_table.sort_values(by=['Student_Order_From', 'Student_Order_To']).reset_index(drop=True)
+    summary_table.index = range(1, len(summary_table) + 1)
+
+    st.dataframe(summary_table)
+
+def display_validation(comparison_sheet, master_sheet, merged_data):
+    st.write("### Validation")
+    with st.expander("Unmatched Rows"):
+        missing_in_master = comparison_sheet[~comparison_sheet['MAIN CODE'].isin(master_sheet['MAIN CODE'])]
+        missing_in_comparison = master_sheet[~master_sheet['MAIN CODE'].isin(comparison_sheet['MAIN CODE'])]
+
+        if not missing_in_master.empty:
+            st.write("### Rows in Uploaded File with Missing Matches in Master File")
+            missing_in_master.index = range(1, len(missing_in_master) + 1)
+            st.dataframe(missing_in_master)
+
+        if not missing_in_comparison.empty:
+            st.write("### Rows in Master File with Missing Matches in Uploaded File")
+            missing_in_comparison.index = range(1, len(missing_in_comparison) + 1)
+            st.dataframe(missing_in_comparison)
+
+    with st.expander("Duplicates"):
+        duplicate_in_uploaded = comparison_sheet[comparison_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
+        duplicate_in_master = master_sheet[master_sheet.duplicated(subset=['MAIN CODE'], keep=False)]
+
+        if not duplicate_in_uploaded.empty:
+            st.write("### Duplicate MAIN CODE Entries in Uploaded File")
+            duplicate_in_uploaded.index = range(1, len(duplicate_in_uploaded) + 1)
+            st.dataframe(duplicate_in_uploaded)
+
+        if not duplicate_in_master.empty:
+            st.write("### Duplicate MAIN CODE Entries in Master File")
+            duplicate_in_master.index = range(1, len(duplicate_in_master) + 1)
+            st.dataframe(duplicate_in_master)
+
+    with st.expander("Missing Values"):
+        missing_values = merged_data[merged_data.isnull().any(axis=1)]
+        if not missing_values.empty:
+            st.write("### Rows with Missing Values in Merged Data")
+            missing_values.index = range(1, len(missing_values) + 1)
+            st.dataframe(missing_values)
+        else:
+            st.success("No missing values found in the merged data!")
+
+def display_unique_tables(merged_data):
+    st.write("### Unique Tables")
+    with st.expander("Unique States"):
+        unique_state_table = merged_data.groupby('State').agg(
+            Options_Filled=('MAIN CODE', 'count')
+        ).reset_index()
+        unique_state_table.index = range(1, len(unique_state_table) + 1)
+        st.dataframe(unique_state_table)
+
+    with st.expander("Unique Programs"):
+        unique_program_table = merged_data.groupby(['Program_uploaded', 'TYPE_uploaded']).agg(
+            Options_Filled=('MAIN CODE', 'count')
+        ).reset_index()
+        unique_program_table.index = range(1, len(unique_program_table) + 1)
+        st.dataframe(unique_program_table)
+
+    with st.expander("Unique Types"):
+        unique_type_table = merged_data.groupby('TYPE_uploaded').agg(
+            Options_Filled=('MAIN CODE', 'count')
+        ).reset_index()
+        unique_type_table.index = range(1, len(unique_type_table) + 1)
+        st.dataframe(unique_type_table)
+
+def display_fee_cutoff_data(merged_data):
+    st.write("### Fee and Cutoff Data")
+    fee_cutoff_table = merged_data[[
+        'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', 'OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'
+    ]].dropna(how='all').reset_index(drop=True)
+
+    fee_cutoff_table['Fees'] = pd.to_numeric(fee_cutoff_table['Fees'], errors='coerce')
+    fee_cutoff_table.index = range(1, len(fee_cutoff_table) + 1)
+
+    selected_column = st.selectbox(
+        "Select Fee or Cutoff to Display:",
+        options=['OC CUTOFF', 'EWS CUTOFF', 'OBC CUTOFF', 'SC CUTOFF', 'ST CUTOFF', 'SERVICE YEARS'],
+        index=0
     )
 
-    # Replace '-' in R1 Remarks with 'R1 Not Allotted'
-    aiqr2_data['R1 Remarks'] = aiqr2_data['R1 Remarks'].replace('-', 'R1 Not Allotted')
+    filtered_fee_cutoff_table = fee_cutoff_table[[
+        'College Name_master', 'Program_uploaded', 'TYPE_uploaded', 'Student Order', 'Fees', selected_column
+    ]].rename(columns={
+        'College Name_master': 'College Name',
+        'Program_uploaded': 'Program',
+        'TYPE_uploaded': 'Type'
+    })
 
-    # Tabs for analysis
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "Course and Category Analysis",
-        "Remarks Analysis",
-        "Comparison Analysis",
-        "Interactive Plotly Analysis"
-    ])
+    filtered_fee_cutoff_table = filtered_fee_cutoff_table.sort_values(by=['Fees', 'Student Order'], ascending=True, na_position='last')
+    filtered_fee_cutoff_table.index = range(1, len(filtered_fee_cutoff_table) + 1)
 
-    # Tab 1: Course and Category Analysis
-    with tab1:
-        st.write("### Course and Category Analysis")
+    st.dataframe(filtered_fee_cutoff_table.style.format({
+        'Fees': "{:.0f}",
+        'Student Order': "{:.0f}",
+        selected_column: "{:.0f}" if selected_column != 'SERVICE YEARS' else "{}"
+    }))
 
-        # Dropdown filters
-        quota_filter = st.selectbox("Select Quota for Filtering:", aiqr2_data['R2 Final Allotted Quota'].unique())
-        filtered_data = aiqr2_data[aiqr2_data['R2 Final Allotted Quota'] == quota_filter]
-
-        category_order = ["Open", "EWS", "OBC", "SC", "ST"]
-        remaining_categories = [cat for cat in filtered_data['R2 Final Alloted Category'].unique() if cat not in category_order]
-        category_order += remaining_categories
-
-        # Create a pivot table for max NEET AIR by R2 Final Course and R2 Final Alloted Category
-        pivot_table = filtered_data.pivot_table(
-            values='NEET AIR', 
-            index='R2 Final Course', 
-            columns='R2 Final Alloted Category', 
-            aggfunc='max', 
-            fill_value=0
-        )
-
-        # Reorder columns to match the category order
-        pivot_table = pivot_table[[col for col in category_order if col in pivot_table.columns]]
-
-        # Convert NEET AIR values to integers for display
-        pivot_table = pivot_table.applymap(lambda x: int(x) if pd.notnull(x) and x != 0 else x)
-
-        st.write(f"### Pivot Table: Maximum NEET AIR by Course and Category (Quota: {quota_filter})")
-        st.dataframe(pivot_table)
-
-    # Tab 2: Remarks Analysis
-    with tab2:
-        st.write("### Remarks Analysis")
-
-        # Display combined remarks table
-        combined_remarks_analysis = aiqr2_data.groupby(['R1 Remarks', 'R2 Final Remarks']).size().reset_index(name='Count')
-        st.write("#### Combined R1 and R2 Remarks Analysis Table")
-        st.dataframe(combined_remarks_analysis)
-
-        # Heatmap for combined remarks
-        st.write("#### Heatmap: R1 to R2 Remarks Transition")
-        pivot_data = combined_remarks_analysis.pivot(
-            index='R1 Remarks', columns='R2 Final Remarks', values='Count'
-        ).fillna(0)
-
-        fig, ax = plt.subplots(figsize=(12, 8))
-        sns.heatmap(pivot_data, annot=True, fmt=".0f", cmap="YlGnBu", linewidths=0.5, ax=ax)
-        ax.set_title("R1 to R2 Remarks Transition Heatmap", fontsize=16)
-        ax.set_xlabel("R2 Final Remarks", fontsize=12)
-        ax.set_ylabel("R1 Remarks", fontsize=12)
-        st.pyplot(fig)
-
-        # Export functionality
-        st.write("#### Export Analysis Data")
-        export_data = combined_remarks_analysis.to_csv(index=False)
-        st.download_button(
-            label="Download Combined Remarks Data as CSV",
-            data=export_data,
-            file_name="combined_remarks_analysis.csv",
-            mime="text/csv"
-        )
-
-    # Tab 3: Comparison Analysis
-    with tab3:
-        st.write("### Comparison Analysis")
-
-        # Horizontal positioning for dynamic filters with interdependencies
-        col1, col2, col3 = st.columns(3)
-        col4, col5, col6 = st.columns(3)
-
-        with col1:
-            compare_r1 = st.multiselect(
-                "Select R1 Remarks to Compare:",
-                options=aiqr2_data['R1 Remarks'].unique(),
-                default=None
-            )
-
-        filtered_data = aiqr2_data[aiqr2_data['R1 Remarks'].isin(compare_r1)] if compare_r1 else aiqr2_data
-
-        with col2:
-            compare_r2 = st.multiselect(
-                "Select R2 Remarks to Compare:",
-                options=filtered_data['R2 Final Remarks'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R2 Final Remarks'].isin(compare_r2)] if compare_r2 else filtered_data
-
-        with col3:
-            compare_r1_quota = st.multiselect(
-                "Select R1 Allotted Quota:",
-                options=filtered_data['R1 Allotted Quota'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R1 Allotted Quota'].isin(compare_r1_quota)] if compare_r1_quota else filtered_data
-
-        with col4:
-            compare_r1_course = st.multiselect(
-                "Select R1 Course:",
-                options=filtered_data['R1 Course'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R1 Course'].isin(compare_r1_course)] if compare_r1_course else filtered_data
-
-        with col5:
-            compare_r2_quota = st.multiselect(
-                "Select R2 Final Allotted Quota:",
-                options=filtered_data['R2 Final Allotted Quota'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R2 Final Allotted Quota'].isin(compare_r2_quota)] if compare_r2_quota else filtered_data
-
-        with col6:
-            compare_r2_course = st.multiselect(
-                "Select R2 Final Course:",
-                options=filtered_data['R2 Final Course'].unique(),
-                default=None
-            )
-            filtered_data = filtered_data[filtered_data['R2 Final Course'].isin(compare_r2_course)] if compare_r2_course else filtered_data
-
-        compare_r2_category = st.multiselect(
-            "Select R2 Final Alloted Category:",
-            options=filtered_data['R2 Final Alloted Category'].unique(),
-            default=None
-        )
-        filtered_data = filtered_data[filtered_data['R2 Final Alloted Category'].isin(compare_r2_category)] if compare_r2_category else filtered_data
-
-        # Add AIQ Rank Slider
-        air_range = st.slider("Select AIQ Rank Range:",
-                              min_value=int(aiqr2_data['NEET AIR'].min()),
-                              max_value=int(aiqr2_data['NEET AIR'].max()),
-                              value=(int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max())))
-        filtered_data = filtered_data[(filtered_data['NEET AIR'] >= air_range[0]) & (filtered_data['NEET AIR'] <= air_range[1])]
-
-        # Display filtered data
-        st.write("### Filtered Comparison Results Table")
-        st.dataframe(filtered_data)
-
-        # Scatter Plot: Filtered Data
-        st.write("### Filtered Comparison Results Scatter Plot")
-        fig, ax = plt.subplots(figsize=(18, 12))
-        sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
-        ax.set_title('Filtered Comparison:\nNEET AIR vs Course Allotments', fontsize=16, loc='left')
-        ax.set_xlabel('NEET AIR', fontsize=14, labelpad=20)
-        ax.set_ylabel('Course', fontsize=14, labelpad=20)
-        st.pyplot(fig)
-
-    # Tab 4: Interactive Plotly Analysis
-    with tab4:
-        st.write("### Interactive Plotly Scatter Plot")
-
-        plotly_fig = px.scatter(
-            filtered_data,
-            x='NEET AIR',
-            y='R2 Final Course',
-            color='R2 Final Alloted Category',
-            size='NEET AIR',
-            hover_data=['R1 Remarks', 'R2 Final Remarks']
-        )
-        plotly_fig.update_layout(
-            title_text="Interactive NEET AIR vs Course Allotments",
-            title_x=0.5,
-            xaxis_title="NEET AIR",
-            yaxis_title="Course",
-            height=800
-        )
-        st.plotly_chart(plotly_fig)
+def split_ranges(lst):
+    if not lst:
+        return ""
+    ranges = []
+    start = lst[0]
+    for i in range(1, len(lst)):
+        if lst[i] != lst[i - 1] + 1:
+            end = lst[i - 1]
+            ranges.append(f"{start}-{end}" if start != end else f"{start}")
+            start = lst[i]
+    ranges.append(f"{start}-{lst[-1]}" if start != lst[-1] else f"{start}")
+    return ", ".join(ranges)
 
 # Call the function to display the dashboard
-display_cutoff_Analysis()
+display_comparison()
