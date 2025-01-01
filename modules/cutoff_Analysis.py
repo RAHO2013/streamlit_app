@@ -3,7 +3,8 @@ import pandas as pd
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 def display_cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
@@ -31,8 +32,8 @@ def display_cutoff_Analysis():
 
     # Collapse AFMS-related remarks
     aiqr2_data['R2 Final Remarks'] = aiqr2_data['R2 Final Remarks'].replace(
-        to_replace=r'Fresh Allotted in 2nd Round\( AFMS Rank : \d+ \)',
-        value='Fresh Allotted in 2nd Round (AFMS)',
+        to_replace=r'Fresh Allotted in 2nd Round\( AFMS Rank : \d+ \)', 
+        value='Fresh Allotted in 2nd Round (AFMS)', 
         regex=True
     )
 
@@ -44,104 +45,241 @@ def display_cutoff_Analysis():
         "Course and Category Analysis",
         "Remarks Analysis",
         "Comparison Analysis",
-        "Scatter Plot"
+        "Advanced Analytics"
     ])
+
+    # Tab 1: Course and Category Analysis
+    with tab1:
+        st.write("### Course and Category Analysis")
+
+        # Dropdown filters
+        quota_filter = st.selectbox("Select Quota for Filtering:", aiqr2_data['R2 Final Allotted Quota'].unique())
+        filtered_data = aiqr2_data[aiqr2_data['R2 Final Allotted Quota'] == quota_filter]
+
+        category_order = ["Open", "EWS", "OBC", "SC", "ST"]
+        remaining_categories = [cat for cat in filtered_data['R2 Final Alloted Category'].unique() if cat not in category_order]
+        category_order += remaining_categories
+
+        # Create a pivot table for max NEET AIR by R2 Final Course and R2 Final Alloted Category
+        pivot_table = filtered_data.pivot_table(
+            values='NEET AIR', 
+            index='R2 Final Course', 
+            columns='R2 Final Alloted Category', 
+            aggfunc='max', 
+            fill_value=0
+        )
+
+        # Reorder columns to match the category order
+        pivot_table = pivot_table[[col for col in category_order if col in pivot_table.columns]]
+
+        # Convert NEET AIR values to integers for display
+        pivot_table = pivot_table.applymap(lambda x: int(x) if pd.notnull(x) and x != 0 else x)
+
+        st.write(f"### Pivot Table: Maximum NEET AIR by Course and Category (Quota: {quota_filter})")
+        st.dataframe(pivot_table)
+
+    # Tab 2: Remarks Analysis
+    with tab2:
+        st.write("### Remarks Analysis")
+
+        # Display combined remarks table
+        combined_remarks_analysis = aiqr2_data.groupby(['R1 Remarks', 'R2 Final Remarks']).size().reset_index(name='Count')
+        st.write("#### Combined R1 and R2 Remarks Analysis Table")
+        st.dataframe(combined_remarks_analysis)
+
+        # Heatmap for combined remarks
+        st.write("#### Heatmap: R1 to R2 Remarks Transition")
+        pivot_data = combined_remarks_analysis.pivot(
+            index='R1 Remarks', columns='R2 Final Remarks', values='Count'
+        ).fillna(0)
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+        sns.heatmap(pivot_data, annot=True, fmt=".0f", cmap="YlGnBu", linewidths=0.5, ax=ax)
+        ax.set_title("R1 to R2 Remarks Transition Heatmap", fontsize=16)
+        ax.set_xlabel("R2 Final Remarks", fontsize=12)
+        ax.set_ylabel("R1 Remarks", fontsize=12)
+        st.pyplot(fig)
+
+        # Export functionality
+        st.write("#### Export Analysis Data")
+        export_data = combined_remarks_analysis.to_csv(index=False)
+        st.download_button(
+            label="Download Combined Remarks Data as CSV",
+            data=export_data,
+            file_name="combined_remarks_analysis.csv",
+            mime="text/csv"
+        )
 
     # Tab 3: Comparison Analysis
     with tab3:
         st.write("### Comparison Analysis")
 
-        # Create 3-by-row layout for filters
-        all_columns = aiqr2_data.columns.tolist()
         col1, col2, col3 = st.columns(3)
         col4, col5, col6 = st.columns(3)
-        col7, col8, col9 = st.columns(3)
-
-        filtered_data = aiqr2_data.copy()
 
         with col1:
-            selected_col1 = st.selectbox("Select Column 1 for Filter:", all_columns, key="filter1")
-            values_col1 = st.multiselect(f"Filter values for {selected_col1}:", aiqr2_data[selected_col1].unique(), key="multiselect1")
-            if values_col1:
-                filtered_data = filtered_data[filtered_data[selected_col1].isin(values_col1)]
+            compare_r1 = st.multiselect(
+                "Select R1 Remarks to Compare:",
+                options=aiqr2_data['R1 Remarks'].unique(),
+                default=None
+            )
+
+        filtered_data = aiqr2_data[aiqr2_data['R1 Remarks'].isin(compare_r1)] if compare_r1 else aiqr2_data
 
         with col2:
-            selected_col2 = st.selectbox("Select Column 2 for Filter:", all_columns, key="filter2")
-            values_col2 = st.multiselect(f"Filter values for {selected_col2}:", aiqr2_data[selected_col2].unique(), key="multiselect2")
-            if values_col2:
-                filtered_data = filtered_data[filtered_data[selected_col2].isin(values_col2)]
+            compare_r2 = st.multiselect(
+                "Select R2 Remarks to Compare:",
+                options=filtered_data['R2 Final Remarks'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R2 Final Remarks'].isin(compare_r2)] if compare_r2 else filtered_data
 
         with col3:
-            selected_col3 = st.selectbox("Select Column 3 for Filter:", all_columns, key="filter3")
-            values_col3 = st.multiselect(f"Filter values for {selected_col3}:", aiqr2_data[selected_col3].unique(), key="multiselect3")
-            if values_col3:
-                filtered_data = filtered_data[filtered_data[selected_col3].isin(values_col3)]
+            compare_r1_quota = st.multiselect(
+                "Select R1 Allotted Quota:",
+                options=filtered_data['R1 Allotted Quota'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R1 Allotted Quota'].isin(compare_r1_quota)] if compare_r1_quota else filtered_data
 
         with col4:
-            selected_col4 = st.selectbox("Select Column 4 for Filter:", all_columns, key="filter4")
-            values_col4 = st.multiselect(f"Filter values for {selected_col4}:", aiqr2_data[selected_col4].unique(), key="multiselect4")
-            if values_col4:
-                filtered_data = filtered_data[filtered_data[selected_col4].isin(values_col4)]
+            compare_r1_course = st.multiselect(
+                "Select R1 Course:",
+                options=filtered_data['R1 Course'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R1 Course'].isin(compare_r1_course)] if compare_r1_course else filtered_data
 
         with col5:
-            selected_col5 = st.selectbox("Select Column 5 for Filter:", all_columns, key="filter5")
-            values_col5 = st.multiselect(f"Filter values for {selected_col5}:", aiqr2_data[selected_col5].unique(), key="multiselect5")
-            if values_col5:
-                filtered_data = filtered_data[filtered_data[selected_col5].isin(values_col5)]
+            compare_r2_quota = st.multiselect(
+                "Select R2 Final Allotted Quota:",
+                options=filtered_data['R2 Final Allotted Quota'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R2 Final Allotted Quota'].isin(compare_r2_quota)] if compare_r2_quota else filtered_data
 
         with col6:
-            selected_col6 = st.selectbox("Select Column 6 for Filter:", all_columns, key="filter6")
-            values_col6 = st.multiselect(f"Filter values for {selected_col6}:", aiqr2_data[selected_col6].unique(), key="multiselect6")
-            if values_col6:
-                filtered_data = filtered_data[filtered_data[selected_col6].isin(values_col6)]
+            compare_r2_course = st.multiselect(
+                "Select R2 Final Course:",
+                options=filtered_data['R2 Final Course'].unique(),
+                default=None
+            )
+            filtered_data = filtered_data[filtered_data['R2 Final Course'].isin(compare_r2_course)] if compare_r2_course else filtered_data
 
-        with col7:
-            selected_col7 = st.selectbox("Select Column 7 for Filter:", all_columns, key="filter7")
-            values_col7 = st.multiselect(f"Filter values for {selected_col7}:", aiqr2_data[selected_col7].unique(), key="multiselect7")
-            if values_col7:
-                filtered_data = filtered_data[filtered_data[selected_col7].isin(values_col7)]
+        compare_r2_category = st.multiselect(
+            "Select R2 Final Alloted Category:",
+            options=filtered_data['R2 Final Alloted Category'].unique(),
+            default=None
+        )
+        filtered_data = filtered_data[filtered_data['R2 Final Alloted Category'].isin(compare_r2_category)] if compare_r2_category else filtered_data
 
-        with col8:
-            selected_col8 = st.selectbox("Select Column 8 for Filter:", all_columns, key="filter8")
-            values_col8 = st.multiselect(f"Filter values for {selected_col8}:", aiqr2_data[selected_col8].unique(), key="multiselect8")
-            if values_col8:
-                filtered_data = filtered_data[filtered_data[selected_col8].isin(values_col8)]
+        air_range = st.slider("Select AIQ Rank Range:",
+                              min_value=int(aiqr2_data['NEET AIR'].min()),
+                              max_value=int(aiqr2_data['NEET AIR'].max()),
+                              value=(int(aiqr2_data['NEET AIR'].min()), int(aiqr2_data['NEET AIR'].max())))
+        filtered_data = filtered_data[(filtered_data['NEET AIR'] >= air_range[0]) & (filtered_data['NEET AIR'] <= air_range[1])]
 
-        with col9:
-            selected_col9 = st.selectbox("Select Column 9 for Filter:", all_columns, key="filter9")
-            values_col9 = st.multiselect(f"Filter values for {selected_col9}:", aiqr2_data[selected_col9].unique(), key="multiselect9")
-            if values_col9:
-                filtered_data = filtered_data[filtered_data[selected_col9].isin(values_col9)]
+        st.write("### Filtered Comparison Results Table")
+        st.dataframe(filtered_data)
+
+        st.write("### Filtered Comparison Results Scatter Plot")
+        fig, ax = plt.subplots(figsize=(18, 12))
+        sns.scatterplot(data=filtered_data, x='NEET AIR', y='R2 Final Course', hue='R2 Final Alloted Category', ax=ax)
+        ax.set_title('Filtered Comparison: NEET AIR vs Course Allotments', fontsize=16)
+        ax.set_xlabel('NEET AIR', fontsize=14)
+        ax.set_ylabel('Course', fontsize=14)
+        st.pyplot(fig)
+
+    # Tab 4: Advanced Analytics
+    with tab4:
+        st.write("### Advanced Analytics")
+
+        # Select columns dynamically
+        st.write("#### Column Selection")
+        all_columns = aiqr2_data.columns.tolist()
+        
+        # Select numeric columns for analysis
+        numeric_columns = aiqr2_data.select_dtypes(include=['number']).columns.tolist()
+        selected_numeric_columns = st.multiselect("Select Numerical Columns for Analysis:", numeric_columns, default=numeric_columns)
+
+        # Select columns for filtering
+        selected_filter_columns = st.multiselect("Select Columns to Filter By:", all_columns)
+        
+        # Dynamic filters for each selected column
+        filter_conditions = {}
+        for col in selected_filter_columns:
+            unique_values = aiqr2_data[col].dropna().unique()
+            selected_values = st.multiselect(f"Filter values for {col}:", unique_values, default=unique_values)
+            filter_conditions[col] = selected_values
+
+        # Apply filters to the data
+        filtered_data = aiqr2_data.copy()
+        for col, values in filter_conditions.items():
+            filtered_data = filtered_data[filtered_data[col].isin(values)]
 
         # Display filtered data
         st.write("### Filtered Data")
         st.dataframe(filtered_data)
 
-    # Tab 4: Scatter Plot
-    with tab4:
-        st.write("### Scatter Plot")
+        # Statistical Summary
+        st.write("#### Statistical Summary")
+        if selected_numeric_columns:
+            stats_summary = filtered_data[selected_numeric_columns].describe().T
+            st.dataframe(stats_summary)
 
-        # Allow user to select columns for scatter plot
-        scatter_x = st.selectbox("Select X-axis:", all_columns, key="scatter_x")
-        scatter_y = st.selectbox("Select Y-axis:", all_columns, key="scatter_y")
-        scatter_hue = st.selectbox("Select Hue (Optional):", [None] + all_columns, key="scatter_hue")
+        # Correlation Analysis
+        st.write("#### Correlation Analysis")
+        if len(selected_numeric_columns) > 1:
+            correlation_matrix = filtered_data[selected_numeric_columns].corr()
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
+            ax.set_title("Correlation Matrix", fontsize=16)
+            st.pyplot(fig)
+        else:
+            st.write("Not enough numerical columns for correlation analysis.")
 
-        # Scatter Plot
-        st.write("### Scatter Plot")
-        fig, ax = plt.subplots(figsize=(12, 8))
-        sns.scatterplot(
-            data=filtered_data,
-            x=scatter_x,
-            y=scatter_y,
-            hue=scatter_hue if scatter_hue else None,
-            ax=ax
-        )
-        ax.set_title(f"Scatter Plot: {scatter_x} vs {scatter_y}", fontsize=16)
-        ax.set_xlabel(scatter_x, fontsize=14)
-        ax.set_ylabel(scatter_y, fontsize=14)
-        ax.legend(loc='upper left', bbox_to_anchor=(1, 1))  # Move legend outside
-        st.pyplot(fig)
-
+        # Clustering Analysis
+        st.write("#### Clustering Analysis (K-Means)")
+        if selected_numeric_columns:
+            clustering_data = filtered_data[selected_numeric_columns].dropna()
+            scaler = StandardScaler()
+            scaled_data = scaler.fit_transform(clustering_data)
+            
+            num_clusters = st.slider("Select Number of Clusters for K-Means:", min_value=2, max_value=10, value=3)
+            kmeans = KMeans(n_clusters=num_clusters, random_state=42)
+            filtered_data['Cluster'] = kmeans.fit_predict(scaled_data)
+            
+            # Visualize Clusters
+            st.write("### Clustered Data Visualization")
+            if len(selected_numeric_columns) >= 2:
+                x_axis = st.selectbox("Select X-axis for Cluster Plot:", selected_numeric_columns)
+                y_axis = st.selectbox("Select Y-axis for Cluster Plot:", selected_numeric_columns)
+                
+                fig, ax = plt.subplots(figsize=(10, 6))
+                sns.scatterplot(
+                    data=filtered_data,
+                    x=x_axis,
+                    y=y_axis,
+                    hue='Cluster',
+                    palette='tab10',
+                    ax=ax
+                )
+                ax.set_title(f"K-Means Clustering ({num_clusters} Clusters)", fontsize=16)
+                ax.set_xlabel(x_axis, fontsize=14)
+                ax.set_ylabel(y_axis, fontsize=14)
+                st.pyplot(fig)
+            else:
+                st.write("Not enough numerical columns for clustering visualization.")
+            
+            # Download Clustered Data
+            st.write("#### Export Clustered Data")
+            export_clustered_data = filtered_data.to_csv(index=False)
+            st.download_button(
+                label="Download Clustered Data as CSV",
+                data=export_clustered_data,
+                file_name="clustered_data.csv",
+                mime="text/csv"
+            )
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
