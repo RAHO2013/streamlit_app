@@ -170,15 +170,8 @@ def display_cutoff_Analysis():
         # Add gridlines to improve readability
         ax.grid(visible=True, which='both', axis='x', linestyle='--', linewidth=0.7)
 
-        # Dynamically adjust the X-axis tick frequency
-        x_min = filtered_data['NEET AIR'].min()
-        x_max = filtered_data['NEET AIR'].max()
-        x_range = x_max - x_min
-        tick_interval = x_range // 10  # Current tick interval
-        adjusted_tick_interval = int(tick_interval * 0.75)  # Slightly increase frequency by reducing interval
-
-        # Set custom ticks on the X-axis
-        ax.set_xticks(range(int(x_min), int(x_max) + 1, adjusted_tick_interval))
+        # Let Matplotlib decide the best-suited X-axis ticks automatically
+        ax.xaxis.set_major_locator(plt.MaxNLocator(nbins='auto', integer=True))
 
         # Update title and axis labels
         ax.set_title(
