@@ -175,10 +175,10 @@ def display_cutoff_Analysis():
         x_max = filtered_data['NEET AIR'].max()
         x_range = x_max - x_min
         tick_interval = x_range // 10  # Current tick interval
-        new_tick_interval = tick_interval // 2  # Double the tick frequency
+        adjusted_tick_interval = int(tick_interval * 0.75)  # Slightly increase frequency by reducing interval
 
         # Set custom ticks on the X-axis
-        ax.set_xticks(range(int(x_min), int(x_max) + 1, int(new_tick_interval)))
+        ax.set_xticks(range(int(x_min), int(x_max) + 1, adjusted_tick_interval))
 
         # Update title and axis labels
         ax.set_title(
