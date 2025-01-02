@@ -151,7 +151,8 @@ def display_cutoff_Analysis():
             lambda x: wrap_text(str(x), width=30)
         )
 
-        # Adjust figure height dynamically to reduce Y-axis spacing
+        # Define fig_width and calculate dynamic fig_height
+        fig_width = 12  # Default width for the figure
         unique_y_values = filtered_data[y_axis_column].nunique()
         base_height = 3  # Reduced base height for compact layout
         increment_per_label = 0.3  # Smaller increment per label
