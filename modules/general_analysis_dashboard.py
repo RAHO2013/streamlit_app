@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# General Analysis Functionality
+
 def display_general_analysis():
     st.title("General Data Analysis Dashboard")
 
@@ -31,21 +31,22 @@ def display_general_analysis():
     st.dataframe(data)
 
     # Tabs for Analysis, Pivot Table, and Frequency Table
-    tab1, tab2, tab3 = st.tabs(["Scatter Plot Analysis", "Pivot Table", "Frequency Table"])
+    tab1, tab2, tab3 = st.tabs(["Graph Analysis", "Pivot Table", "Frequency Table"])
 
-    # Tab 1: Scatter Plot Analysis
+    # Tab 1: Graph Analysis
     with tab1:
+        st.write("### Select Graph Type and Plot")
+
         # Step 3: Detect Columns Dynamically
         numeric_columns = data.select_dtypes(include=['number']).columns.tolist()
         categorical_columns = data.select_dtypes(include=['object', 'category']).columns.tolist()
         all_columns = data.columns.tolist()
 
         if not numeric_columns:
-            st.warning("No numeric columns detected. Scatter plot might not work.")
+            st.warning("No numeric columns detected. Plotting might not work.")
             return
 
-        # Step 4: User Selection for Filters and Plot
-        st.write("### Filter and Customize Your Plot")
+        # Step 4: User Selection for Filters
         with st.expander("Select Filters"):
             filters = {}
             for col in all_columns:
@@ -60,40 +61,47 @@ def display_general_analysis():
         for col, selected_values in filters.items():
             filtered_data = filtered_data[filtered_data[col].isin(selected_values)]
 
-        # Step 5: Plot Customization Options
-        st.write("### Customize Your Scatter Plot")
-        x_axis = st.selectbox("Select X-Axis:", options=numeric_columns)
-        y_axis = st.selectbox("Select Y-Axis:", options=numeric_columns)
-        hue = st.selectbox("Select Hue (Color):", options=all_columns + [None], index=len(all_columns))
-        style = st.selectbox("Select Style (Shape):", options=all_columns + [None], index=len(all_columns))
+        # Step 5: Select Graph Type
+        graph_type = st.selectbox("Select Graph Type:", options=["Scatter Plot", "Line Plot", "Bar Chart", "Histogram"])
 
-        # Step 6: Generate Scatter Plot
-        st.write("### Scatter Plot")
-        fig_width = st.slider("Adjust Figure Width:", min_value=8, max_value=30, value=12)
-        fig_height = st.slider("Adjust Figure Height:", min_value=6, max_value=20, value=8)
+        x_axis = st.selectbox("Select X-Axis:", options=all_columns)
+        y_axis = st.selectbox("Select Y-Axis:", options=numeric_columns if numeric_columns else [None], index=0)
 
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-        sns.scatterplot(
-            data=filtered_data,
-            x=x_axis,
-            y=y_axis,
-            hue=hue if hue else None,
-            style=style if style else None,
-            ax=ax,
-            s=50  # Marker size
-        )
+        # Step 6: Generate Selected Graph
+        if graph_type == "Scatter Plot":
+            st.write("### Scatter Plot")
+            hue = st.selectbox("Select Hue (Color):", options=all_columns + [None], index=len(all_columns))
+            style = st.selectbox("Select Style (Shape):", options=all_columns + [None], index=len(all_columns))
 
-        # Add gridlines
-        ax.grid(visible=True, which='both', axis='both', linestyle='--', linewidth=0.5, alpha=0.7)
+            fig, ax = plt.subplots(figsize=(12, 8))
+            sns.scatterplot(
+                data=filtered_data,
+                x=x_axis,
+                y=y_axis,
+                hue=hue if hue else None,
+                style=style if style else None,
+                ax=ax,
+                s=50  # Marker size
+            )
+            st.pyplot(fig)
 
-        # Set titles and labels
-        ax.set_title(f"{x_axis} vs {y_axis}", fontsize=16)
-        ax.set_xlabel(x_axis, fontsize=12)
-        ax.set_ylabel(y_axis, fontsize=12)
+        elif graph_type == "Line Plot":
+            st.write("### Line Plot")
+            fig, ax = plt.subplots(figsize=(12, 8))
+            sns.lineplot(data=filtered_data, x=x_axis, y=y_axis, ax=ax)
+            st.pyplot(fig)
 
-        # Adjust layout
-        plt.tight_layout()
-        st.pyplot(fig)
+        elif graph_type == "Bar Chart":
+            st.write("### Bar Chart")
+            fig, ax = plt.subplots(figsize=(12, 8))
+            sns.barplot(data=filtered_data, x=x_axis, y=y_axis, ax=ax)
+            st.pyplot(fig)
+
+        elif graph_type == "Histogram":
+            st.write("### Histogram")
+            fig, ax = plt.subplots(figsize=(12, 8))
+            sns.histplot(data=filtered_data, x=x_axis, bins=20, kde=True, ax=ax)
+            st.pyplot(fig)
 
     # Tab 2: Pivot Table
     with tab2:
@@ -105,29 +113,33 @@ def display_general_analysis():
         values = st.multiselect("Select Values (Numeric):", options=numeric_columns, default=numeric_columns[:1])
         aggfunc = st.selectbox("Select Aggregation Function:", options=["sum", "mean", "max", "min", "count"], index=0)
 
-        # Generate Pivot Table
+        # Validate Selections
         if rows and values:
-            pivot_table = pd.pivot_table(
-                data,
-                values=values,
-                index=rows,
-                columns=columns if columns else None,
-                aggfunc=aggfunc,
-                fill_value=0
-            )
+            try:
+                pivot_table = pd.pivot_table(
+                    data,
+                    values=values,
+                    index=rows,
+                    columns=columns if columns else None,
+                    aggfunc=aggfunc,
+                    fill_value=0
+                )
+                st.write("### Generated Pivot Table")
+                st.dataframe(pivot_table)
 
-            st.write("### Generated Pivot Table")
-            st.dataframe(pivot_table)
-
-            # Export Pivot Table
-            st.write("### Download Pivot Table")
-            pivot_csv = pivot_table.to_csv()
-            st.download_button(
-                label="Download Pivot Table as CSV",
-                data=pivot_csv,
-                file_name="pivot_table.csv",
-                mime="text/csv"
-            )
+                # Export Pivot Table
+                st.write("### Download Pivot Table")
+                pivot_csv = pivot_table.to_csv()
+                st.download_button(
+                    label="Download Pivot Table as CSV",
+                    data=pivot_csv,
+                    file_name="pivot_table.csv",
+                    mime="text/csv"
+                )
+            except ValueError as e:
+                st.error(f"Error generating pivot table: {e}")
+        else:
+            st.warning("Please select at least one row and one value to generate a pivot table.")
 
     # Tab 3: Frequency Table
     with tab3:
