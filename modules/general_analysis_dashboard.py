@@ -36,7 +36,6 @@ def display_general_analysis():
     # Tab 1: Graph Analysis
     with tab1:
         st.write("### Select Graph Type and Plot")
-        # Detect Columns Dynamically
         numeric_columns = data.select_dtypes(include=['number']).columns.tolist()
         categorical_columns = data.select_dtypes(include=['object', 'category']).columns.tolist()
         all_columns = data.columns.tolist()
@@ -50,7 +49,7 @@ def display_general_analysis():
             filters = {}
             for col in all_columns:
                 unique_values = data[col].unique()
-                if len(unique_values) <= 50:  # Limit to columns with fewer unique values for dropdowns
+                if len(unique_values) <= 50:
                     selected_values = st.multiselect(f"Filter {col}:", options=unique_values, default=unique_values)
                     if selected_values and len(selected_values) < len(unique_values):
                         filters[col] = selected_values
@@ -130,24 +129,55 @@ def display_general_analysis():
     with tab3:
         st.write("### Create a Grouped Frequency Table")
 
-        numeric_columns = data.select_dtypes(include=['number']).columns.tolist()
-        if numeric_columns:
-            group_column = st.selectbox("Select a Numeric Column to Group By:", options=numeric_columns)
+        group_column = st.selectbox("Select a Column to Group By:", options=data.columns)
+
+        # Check if the column is numeric or categorical
+        if pd.api.types.is_numeric_dtype(data[group_column]):
             bin_size = st.slider("Select Bin Size:", min_value=1, max_value=50, value=10)
+            data['Bins'] = pd.cut(data[group_column], 
+                                  bins=range(int(data[group_column].min()), 
+                                             int(data[group_column].max()) + bin_size, 
+                                             bin_size), 
+                                  right=False)
+            grouped_data = data.groupby('Bins').size().reset_index(name='Count')
+            grouped_data['Percentage'] = (grouped_data['Count'] / grouped_data['Count'].sum()) * 100
+        else:
+            grouped_data = data[group_column].value_counts().reset_index()
+            grouped_data.columns = [group_column, 'Count']
+            grouped_data['Percentage'] = (grouped_data['Count'] / grouped_data['Count'].sum()) * 100
 
-            if group_column:
-                data['Bins'] = pd.cut(data[group_column], bins=range(int(data[group_column].min()), 
-                                                                     int(data[group_column].max()) + bin_size, 
-                                                                     bin_size), right=False)
-                frequency_table = data.groupby('Bins').size().reset_index(name='Frequency')
+        # Display Grouped Frequency Table
+        st.write("### Grouped Frequency Table")
+        st.dataframe(grouped_data)
 
-                st.write("### Grouped Frequency Table")
-                st.dataframe(frequency_table)
+        # Export Frequency Table
+        frequency_csv = grouped_data.to_csv(index=False)
+        st.download_button(
+            label="Download Frequency Table as CSV",
+            data=frequency_csv,
+            file_name="grouped_frequency_table.csv",
+            mime="text/csv"
+        )
 
-                frequency_csv = frequency_table.to_csv(index=False)
-                st.download_button(
-                    label="Download Frequency Table as CSV",
-                    data=frequency_csv,
-                    file_name="grouped_frequency_table.csv",
-                    mime="text/csv"
-                )
+        # Visualize Grouped Data
+        st.write("### Visualize Grouped Data")
+        graph_type = st.selectbox("Select Graph Type for Frequency Data:", options=["Bar Chart", "Pie Chart"])
+
+        if graph_type == "Bar Chart":
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.barplot(data=grouped_data, x=grouped_data.columns[0], y='Count', ax=ax)
+            ax.set_title("Bar Chart of Grouped Data", fontsize=16)
+            ax.set_xlabel(grouped_data.columns[0], fontsize=12)
+            ax.set_ylabel("Count", fontsize=12)
+            st.pyplot(fig)
+
+        elif graph_type == "Pie Chart":
+            fig, ax = plt.subplots(figsize=(8, 8))
+            ax.pie(grouped_data['Count'], labels=grouped_data[grouped_data.columns[0]], autopct='%1.1f%%', startangle=90)
+            ax.set_title("Pie Chart of Grouped Data", fontsize=16)
+            st.pyplot(fig)
+
+
+# Run the function
+if __name__ == "__main__":
+    display_general_analysis()
