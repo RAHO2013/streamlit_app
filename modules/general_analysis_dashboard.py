@@ -30,8 +30,8 @@ def display_general_analysis():
     st.write("### Uploaded Dataset")
     st.dataframe(data)
 
-    # Tabs for Analysis and Pivot Table
-    tab1, tab2 = st.tabs(["Scatter Plot Analysis", "Pivot Table"])
+    # Tabs for Analysis, Pivot Table, and Frequency Table
+    tab1, tab2, tab3 = st.tabs(["Scatter Plot Analysis", "Pivot Table", "Frequency Table"])
 
     # Tab 1: Scatter Plot Analysis
     with tab1:
@@ -100,18 +100,18 @@ def display_general_analysis():
         st.write("### Create a Pivot Table")
 
         # Dynamic Selection of Rows, Columns, and Values
-        rows = st.selectbox("Select Rows:", options=data.columns, index=0)
-        columns = st.selectbox("Select Columns:", options=data.columns, index=0)
-        values = st.selectbox("Select Values (Numeric):", options=numeric_columns, index=0)
+        rows = st.multiselect("Select Rows:", options=data.columns, default=[data.columns[0]])
+        columns = st.multiselect("Select Columns:", options=data.columns, default=[])
+        values = st.multiselect("Select Values (Numeric):", options=numeric_columns, default=numeric_columns[:1])
         aggfunc = st.selectbox("Select Aggregation Function:", options=["sum", "mean", "max", "min", "count"], index=0)
 
         # Generate Pivot Table
-        if rows and columns and values:
+        if rows and values:
             pivot_table = pd.pivot_table(
                 data,
                 values=values,
                 index=rows,
-                columns=columns,
+                columns=columns if columns else None,
                 aggfunc=aggfunc,
                 fill_value=0
             )
@@ -126,5 +126,27 @@ def display_general_analysis():
                 label="Download Pivot Table as CSV",
                 data=pivot_csv,
                 file_name="pivot_table.csv",
+                mime="text/csv"
+            )
+
+    # Tab 3: Frequency Table
+    with tab3:
+        st.write("### Create a Frequency Table")
+
+        # Select Columns for Grouping
+        group_by = st.multiselect("Select Columns to Group By:", options=data.columns, default=[])
+        if group_by:
+            frequency_table = data.groupby(group_by).size().reset_index(name='Frequency')
+
+            st.write("### Generated Frequency Table")
+            st.dataframe(frequency_table)
+
+            # Export Frequency Table
+            st.write("### Download Frequency Table")
+            frequency_csv = frequency_table.to_csv(index=False)
+            st.download_button(
+                label="Download Frequency Table as CSV",
+                data=frequency_csv,
+                file_name="frequency_table.csv",
                 mime="text/csv"
             )
