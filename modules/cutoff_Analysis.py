@@ -151,14 +151,14 @@ def display_cutoff_Analysis():
             lambda x: wrap_text(str(x), width=30)
         )
 
-        # Adjust figure height dynamically
+        # Adjust figure height dynamically to reduce Y-axis spacing
         unique_y_values = filtered_data[y_axis_column].nunique()
-        base_height = 4  # Minimum height
-        increment_per_label = 0.5  # Additional height per label
+        base_height = 3  # Reduced base height for compact layout
+        increment_per_label = 0.3  # Smaller increment per label
         fig_height = max(base_height, base_height + unique_y_values * increment_per_label)
 
-        # Create scatter plot
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=150)  # Adjusted dynamic height
+        # Create scatter plot with adjusted height
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=150)
         sns.scatterplot(
             data=filtered_data,
             x='NEET AIR',
@@ -166,13 +166,13 @@ def display_cutoff_Analysis():
             hue=hue_column,
             style=style_column,
             ax=ax,
-            s=50  # Reduced marker size for better separation
+            s=50  # Marker size
         )
 
-        # Add gridlines to improve readability
+        # Add gridlines
         ax.grid(visible=True, which='both', axis='x', linestyle='--', linewidth=0.7, alpha=0.5)
 
-        # Let Matplotlib decide the best-suited X-axis ticks automatically
+        # Let Matplotlib decide the best X-axis ticks
         ax.xaxis.set_major_locator(plt.MaxNLocator(nbins='auto', integer=True))
 
         # Update title and axis labels
@@ -183,15 +183,15 @@ def display_cutoff_Analysis():
         ax.set_xlabel('NEET AIR', fontsize=14)
         ax.set_ylabel(y_axis_column, fontsize=14)
 
-        # Place legend further outside for better spacing
+        # Place legend outside the chart
         ax.legend(
             title=hue_column,
-            bbox_to_anchor=(1.2, 1),  # Adjusted legend placement
+            bbox_to_anchor=(1.2, 1),
             loc='upper left',
             borderaxespad=0.
         )
 
-        # Adjust layout for readability
+        # Adjust layout
         plt.tight_layout()
 
         st.pyplot(fig)
