@@ -160,15 +160,17 @@ def display_general_analysis():
     with tab4:
         st.write("### Generate a Statistical Table")
 
-        columns = st.multiselect("Select Columns for Statistical Analysis:", options=data.columns)
+        # Only allow numeric columns for statistical analysis
+        numeric_columns = data.select_dtypes(include=['number']).columns.tolist()
+        columns = st.multiselect("Select Numeric Columns for Statistical Analysis:", options=numeric_columns)
 
         if columns:
             stats_table = pd.DataFrame({
-                "Mean": data[columns].mean(),
-                "Std Deviation": data[columns].std(),
+                "Metric": columns,
+                "Mean": data[columns].mean().values,
+                "Std Deviation": data[columns].std().values,
                 "P-value": [0.005] * len(columns)  # Placeholder for p-value
-            }).reset_index()
-            stats_table.columns = ["Metric", "Mean", "Std Deviation", "P-value"]
+            })
 
             st.write("### Statistical Table")
             st.table(stats_table)
