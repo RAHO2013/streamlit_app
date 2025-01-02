@@ -33,6 +33,11 @@ def navigate():
         if st.button("Aiq Round 2"):
             st.session_state.page = "Cutoff_Analysis"
 
+    # General Analysis Section
+    with st.sidebar.expander("📂 General Analysis", expanded=False):
+        if st.button("Upload & Analyze"):
+            st.session_state.page = "general_analysis"
+
 # Run the selected page
 def run_page():
     if 'page' not in st.session_state:
@@ -56,6 +61,9 @@ def run_page():
     elif st.session_state.page == "Cutoff_Analysis":
         from modules.cutoff_Analysis import display_cutoff_Analysis
         display_cutoff_Analysis()
+    elif st.session_state.page == "general_analysis":
+        from modules.general_analysis_dashboard import display_general_analysis
+        display_general_analysis()
 
 # Main app logic
 def main():
