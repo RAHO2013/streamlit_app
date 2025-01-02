@@ -153,22 +153,24 @@ def display_cutoff_Analysis():
 
         # Adjust figure height dynamically
         unique_y_values = filtered_data[y_axis_column].nunique()
-        fig_height = 6 + unique_y_values * 0.3
-        fig_width = 14  # Slightly increase width for balance
+        base_height = 4  # Minimum height
+        increment_per_label = 0.5  # Additional height per label
+        fig_height = max(base_height, base_height + unique_y_values * increment_per_label)
 
         # Create scatter plot
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=150)  # Increased DPI for higher quality
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=150)  # Adjusted dynamic height
         sns.scatterplot(
             data=filtered_data,
             x='NEET AIR',
             y=y_axis_column,
             hue=hue_column,
             style=style_column,
-            ax=ax
+            ax=ax,
+            s=50  # Reduced marker size for better separation
         )
 
         # Add gridlines to improve readability
-        ax.grid(visible=True, which='both', axis='x', linestyle='--', linewidth=0.7)
+        ax.grid(visible=True, which='both', axis='x', linestyle='--', linewidth=0.7, alpha=0.5)
 
         # Let Matplotlib decide the best-suited X-axis ticks automatically
         ax.xaxis.set_major_locator(plt.MaxNLocator(nbins='auto', integer=True))
@@ -181,10 +183,10 @@ def display_cutoff_Analysis():
         ax.set_xlabel('NEET AIR', fontsize=14)
         ax.set_ylabel(y_axis_column, fontsize=14)
 
-        # Place legend outside the chart
+        # Place legend further outside for better spacing
         ax.legend(
             title=hue_column,
-            bbox_to_anchor=(1.05, 1),
+            bbox_to_anchor=(1.2, 1),  # Adjusted legend placement
             loc='upper left',
             borderaxespad=0.
         )
