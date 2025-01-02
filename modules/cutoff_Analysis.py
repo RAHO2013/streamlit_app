@@ -92,7 +92,7 @@ def display_cutoff_Analysis():
             index='R1 Remarks', columns='R2 Final Remarks', values='Count'
         ).fillna(0)
 
-        fig, ax = plt.subplots(figsize=(12, 8))
+        fig, ax = plt.subplots(figsize=(12, 8), dpi=150)
         sns.heatmap(pivot_data, annot=True, fmt=".0f", cmap="YlGnBu", linewidths=0.5, ax=ax)
         ax.set_title("R1 to R2 Remarks Transition Heatmap", fontsize=16)
         ax.set_xlabel("R2 Final Remarks", fontsize=12)
@@ -157,7 +157,7 @@ def display_cutoff_Analysis():
         fig_width = 14  # Slightly increase width for balance
 
         # Create scatter plot
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=150)  # Increased DPI for higher quality
         sns.scatterplot(
             data=filtered_data,
             x='NEET AIR',
