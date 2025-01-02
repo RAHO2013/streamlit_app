@@ -152,13 +152,13 @@ def display_cutoff_Analysis():
         )
 
         # Define fig_width and calculate dynamic fig_height
-        fig_width = 12  # Default width for the figure
+        fig_width = 18  # Increased width for the figure
         unique_y_values = filtered_data[y_axis_column].nunique()
-        base_height = 3  # Reduced base height for compact layout
-        increment_per_label = 0.3  # Smaller increment per label
+        base_height = 3  # Base height for compact layout
+        increment_per_label = 0.3  # Increment per label
         fig_height = max(base_height, base_height + unique_y_values * increment_per_label)
 
-        # Create scatter plot with adjusted height
+        # Create scatter plot with adjusted width and height
         fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=150)
         sns.scatterplot(
             data=filtered_data,
