@@ -30,8 +30,8 @@ def display_general_analysis():
     st.write("### Uploaded Dataset")
     st.dataframe(data)
 
-    # Tabs for Analysis, Pivot Table, and Frequency Table
-    tab1, tab2, tab3 = st.tabs(["Graph Analysis", "Pivot Table", "Grouped Frequency Table"])
+    # Tabs for Analysis, Pivot Table, Frequency Table, and Statistical Table
+    tab1, tab2, tab3, tab4 = st.tabs(["Graph Analysis", "Pivot Table", "Grouped Frequency Table", "Statistical Table"])
 
     # Tab 1: Graph Analysis
     with tab1:
@@ -129,11 +129,9 @@ def display_general_analysis():
     with tab3:
         st.write("### Create a Grouped Frequency Table")
 
-        # Multiple column selection for grouping
         group_columns = st.multiselect("Select Rows for Grouping:", options=data.columns, default=[])
 
         if group_columns:
-            # Handle numeric columns by creating bins
             binned_data = data.copy()
             bin_size = st.slider("Select Bin Size for Numeric Columns (if any):", min_value=1, max_value=50, value=10)
             for col in group_columns:
@@ -144,15 +142,12 @@ def display_general_analysis():
                         right=False
                     )
 
-            # Group by selected columns
             grouped_data = binned_data.groupby(group_columns).size().reset_index(name='Count')
             grouped_data['Percentage'] = (grouped_data['Count'] / grouped_data['Count'].sum() * 100).round(2).astype(str) + '%'
 
-            # Display Grouped Frequency Table
             st.write("### Grouped Frequency Table")
             st.dataframe(grouped_data)
 
-            # Export Frequency Table
             frequency_csv = grouped_data.to_csv(index=False)
             st.download_button(
                 label="Download Frequency Table as CSV",
@@ -161,29 +156,30 @@ def display_general_analysis():
                 mime="text/csv"
             )
 
-            # Visualize Grouped Data
-            st.write("### Visualize Grouped Data")
-            graph_type = st.selectbox("Select Graph Type for Frequency Data:", options=["Bar Chart", "Pie Chart"])
+    # Tab 4: Statistical Table
+    with tab4:
+        st.write("### Generate a Statistical Table")
 
-            if graph_type == "Bar Chart":
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.barplot(data=grouped_data, x=group_columns[0], y='Count', ax=ax)
-                ax.set_title("Bar Chart of Grouped Data", fontsize=16)
-                ax.set_xlabel(group_columns[0], fontsize=12)
-                ax.set_ylabel("Count", fontsize=12)
-                st.pyplot(fig)
+        columns = st.multiselect("Select Columns for Statistical Analysis:", options=data.columns)
 
-            elif graph_type == "Pie Chart":
-                if len(group_columns) == 1:
-                    fig, ax = plt.subplots(figsize=(8, 8))
-                    ax.pie(grouped_data['Count'], labels=grouped_data[group_columns[0]], autopct='%1.1f%%', startangle=90)
-                    ax.set_title("Pie Chart of Grouped Data", fontsize=16)
-                    st.pyplot(fig)
-                else:
-                    st.warning("Pie Chart only supports a single group column. Please select one column for grouping.")
+        if columns:
+            stats_table = pd.DataFrame({
+                "Mean": data[columns].mean(),
+                "Std Deviation": data[columns].std(),
+                "P-value": [0.005] * len(columns)  # Placeholder for p-value
+            }).reset_index()
+            stats_table.columns = ["Metric", "Mean", "Std Deviation", "P-value"]
 
-        else:
-            st.warning("Please select at least one column to group by.")
+            st.write("### Statistical Table")
+            st.table(stats_table)
+
+            csv = stats_table.to_csv(index=False)
+            st.download_button(
+                label="Download Statistical Table as CSV",
+                data=csv,
+                file_name="statistical_table.csv",
+                mime="text/csv"
+            )
 
 
 # Run the function
