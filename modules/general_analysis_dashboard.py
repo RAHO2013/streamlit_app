@@ -130,7 +130,7 @@ def display_general_analysis():
         st.write("### Create a Grouped Frequency Table")
 
         # Multiple column selection for grouping
-        group_columns = st.multiselect("Select Columns to Group By:", options=data.columns, default=[])
+        group_columns = st.multiselect("Select Rows for Grouping:", options=data.columns, default=[])
 
         if group_columns:
             # Handle numeric columns by creating bins
