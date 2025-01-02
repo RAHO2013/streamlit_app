@@ -133,8 +133,20 @@ def display_general_analysis():
         group_columns = st.multiselect("Select Columns to Group By:", options=data.columns, default=[])
 
         if group_columns:
-            grouped_data = data.groupby(group_columns).size().reset_index(name='Count')
-            grouped_data['Percentage'] = (grouped_data['Count'] / grouped_data['Count'].sum()) * 100
+            # Handle numeric columns by creating bins
+            binned_data = data.copy()
+            bin_size = st.slider("Select Bin Size for Numeric Columns (if any):", min_value=1, max_value=50, value=10)
+            for col in group_columns:
+                if pd.api.types.is_numeric_dtype(data[col]):
+                    binned_data[col] = pd.cut(
+                        data[col],
+                        bins=range(int(data[col].min()), int(data[col].max()) + bin_size, bin_size),
+                        right=False
+                    )
+
+            # Group by selected columns
+            grouped_data = binned_data.groupby(group_columns).size().reset_index(name='Count')
+            grouped_data['Percentage'] = (grouped_data['Count'] / grouped_data['Count'].sum() * 100).round(2).astype(str) + '%'
 
             # Display Grouped Frequency Table
             st.write("### Grouped Frequency Table")
