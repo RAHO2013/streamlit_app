@@ -174,7 +174,7 @@ def display_cutoff_Analysis():
         ax.grid(visible=True, which='both', axis='x', linestyle='--', linewidth=0.7, alpha=0.5)
 
         # Explicitly set X-axis limits (optional, adjust based on your data range)
-        ax.set_xlim(left=0, right=100000)  # Increase X-axis range if needed
+        ax.set_xlim(left=0, right=140000)  # Increase X-axis range if needed
 
         # Let Matplotlib decide the best X-axis ticks
         ax.xaxis.set_major_locator(plt.MaxNLocator(nbins='auto', integer=True))
