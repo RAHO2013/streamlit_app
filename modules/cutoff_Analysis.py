@@ -152,7 +152,7 @@ def display_cutoff_Analysis():
         )
 
         # Define fig_width and calculate dynamic fig_height
-        fig_width = 20  # Further increased width for the figure
+        fig_width = 15  # Further increased width for the figure
         unique_y_values = filtered_data[y_axis_column].nunique()
         base_height = 3  # Base height for compact layout
         increment_per_label = 0.3  # Increment per label
