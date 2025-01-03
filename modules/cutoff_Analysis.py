@@ -188,7 +188,7 @@ def display_cutoff_Analysis():
         # Place legend outside the chart
         ax.legend(
             title=hue_column,
-            bbox_to_anchor=(1, 1),
+            bbox_to_anchor=(1.01, 1),
             loc='upper left',
             borderaxespad=0.
         )
