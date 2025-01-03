@@ -4,7 +4,7 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 import textwrap
-
+import plotly.express as px
 
 def display_cutoff_Analysis():
     st.title("NEET AIQ Analysis Dashboard")
@@ -41,10 +41,11 @@ def display_cutoff_Analysis():
     aiqr2_data['R1 Remarks'] = aiqr2_data['R1 Remarks'].replace('-', 'R1 Not Allotted')
 
     # Tabs for analysis
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "Course and Category Analysis",
         "Remarks Analysis",
-        "Comparison Analysis"
+        "Comparison Analysis",
+        "Interactive Plotly Graphs"
     ])
 
     # Tab 1: Course and Category Analysis
@@ -142,24 +143,8 @@ def display_cutoff_Analysis():
         hue_column = st.selectbox("Select Hue (Color):", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Alloted Category'))
         style_column = st.selectbox("Select Style (Shape):", options=aiqr2_data.columns, index=aiqr2_data.columns.get_loc('R2 Final Allotted Quota'))
 
-        # Function to wrap long text
-        def wrap_text(text, width=40):
-            return "\n".join(textwrap.wrap(text, width))
-
-        # Shorten Y-axis labels (abbreviate if needed)
-        filtered_data[y_axis_column] = filtered_data[y_axis_column].apply(
-            lambda x: wrap_text(str(x), width=30)
-        )
-
-        # Define fig_width and calculate dynamic fig_height
-        fig_width = 15  # Further increased width for the figure
-        unique_y_values = filtered_data[y_axis_column].nunique()
-        base_height = 3  # Base height for compact layout
-        increment_per_label = 0.3  # Increment per label
-        fig_height = max(base_height, base_height + unique_y_values * increment_per_label)
-
-        # Create scatter plot with adjusted width and height
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=300)
+        # Create scatter plot
+        fig, ax = plt.subplots(figsize=(12, 8), dpi=150)
         sns.scatterplot(
             data=filtered_data,
             x='NEET AIR',
@@ -167,44 +152,45 @@ def display_cutoff_Analysis():
             hue=hue_column,
             style=style_column,
             ax=ax,
-            s=50  # Marker size
+            s=50
         )
-
-        # Add gridlines
         ax.grid(visible=True, which='both', axis='x', linestyle='--', linewidth=0.7, alpha=0.5)
-
-
-        # Let Matplotlib decide the best X-axis ticks
-        ax.xaxis.set_major_locator(plt.MaxNLocator(nbins='auto', integer=True))
-
-        # Update title and axis labels
-        ax.set_title(
-            f"Filtered Comparison: NEET AIR vs {wrap_text(y_axis_column, width=30)}",
-            fontsize=14, loc='center'
-        )
+        ax.set_title(f"Filtered Comparison: NEET AIR vs {y_axis_column}", fontsize=14)
         ax.set_xlabel('NEET AIR', fontsize=14)
         ax.set_ylabel(y_axis_column, fontsize=14)
-
-        # Place legend outside the chart
-        ax.legend(
-            title=hue_column,
-            bbox_to_anchor=(1.01, 1),
-            loc='upper left',
-            borderaxespad=0.
-        )
-
-        # Adjust layout
-        plt.tight_layout()
-
+        ax.legend(bbox_to_anchor=(1.01, 1), loc='upper left', borderaxespad=0.)
         st.pyplot(fig)
 
-        # Display filters below the chart
-        st.write("### Active Filters:")
-        if active_filters:
-            st.markdown("\n".join([f"- **{wrap_text(filter, 50)}**" for filter in active_filters]))
-        else:
-            st.write("No filters applied")
+    # Tab 4: Interactive Plotly Graphs
+    with tab4:
+        st.write("### Interactive Plotly Graphs")
 
+        # Plotly Heatmap
+        st.write("#### Plotly Heatmap: R1 to R2 Remarks Transition")
+        fig = px.imshow(
+            pivot_data,
+            text_auto=True,
+            aspect="auto",
+            color_continuous_scale="YlGnBu",
+            title="R1 to R2 Remarks Transition Heatmap"
+        )
+        fig.update_layout(xaxis_title="R2 Final Remarks", yaxis_title="R1 Remarks")
+        st.plotly_chart(fig)
+
+        # Plotly Scatter Plot
+        st.write("#### Plotly Scatter Plot: Filtered Data")
+        fig = px.scatter(
+            filtered_data,
+            x='NEET AIR',
+            y=y_axis_column,
+            color=hue_column,
+            symbol=style_column,
+            title=f"Filtered Comparison: NEET AIR vs {y_axis_column}",
+            hover_data=filtered_data.columns
+        )
+        fig.update_traces(marker=dict(size=10))
+        fig.update_layout(xaxis_title="NEET AIR", yaxis_title=y_axis_column)
+        st.plotly_chart(fig)
 
 # Call the function to display the dashboard
 display_cutoff_Analysis()
