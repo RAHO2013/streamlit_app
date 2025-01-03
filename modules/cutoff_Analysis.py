@@ -159,7 +159,7 @@ def display_cutoff_Analysis():
         fig_height = max(base_height, base_height + unique_y_values * increment_per_label)
 
         # Create scatter plot with adjusted width and height
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=150)
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=300)
         sns.scatterplot(
             data=filtered_data,
             x='NEET AIR',
