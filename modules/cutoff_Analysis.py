@@ -163,20 +163,6 @@ def display_cutoff_Analysis():
 
     # Tab 4: Interactive Plotly Graphs
     with tab4:
-        st.write("### Interactive Plotly Graphs")
-
-        # Plotly Heatmap
-        st.write("#### Plotly Heatmap: R1 to R2 Remarks Transition")
-        fig = px.imshow(
-            pivot_data,
-            text_auto=True,
-            aspect="auto",
-            color_continuous_scale="YlGnBu",
-            title="R1 to R2 Remarks Transition Heatmap"
-        )
-        fig.update_layout(xaxis_title="R2 Final Remarks", yaxis_title="R1 Remarks")
-        st.plotly_chart(fig)
-
         # Plotly Scatter Plot
         st.write("#### Plotly Scatter Plot: Filtered Data")
         fig = px.scatter(
